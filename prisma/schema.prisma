@@ -1,0 +1,192 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type             String
+  provider         String
+  providerAccountId String
+  refresh_token    String? @db.Text
+  access_token     String? @db.Text
+  expires_at       Int?
+  token_type       String?
+  scope            String?
+  id_token         String? @db.Text
+  session_state    String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  roleId        String?
+  accounts      Account[]
+  sessions      Session[]
+  role          Role?     @relation(fields: [roleId], references: [id])
+  employee      Employee?
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Role {
+  id          String @id @default(cuid())
+  name        String @unique
+  description String
+  users       User[]
+}
+
+model EmployeeType {
+  id          String     @id @default(cuid())
+  name        String     @unique
+  description String
+  employees   Employee[]
+}
+
+model Employee {
+  id                String        @id @default(cuid())
+  userId            String       @unique
+  employeeTypeId    String
+  firstName         String
+  lastName          String
+  email             String?       @unique
+  phoneNumber       String?       @unique
+  address           String?
+  user              User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  employeeType      EmployeeType @relation(fields: [employeeTypeId], references: [id])
+  interventions     EmployeeIntervention[]
+  team   EmployeeInTeam[]
+}
+
+model EmployeeIntervention {
+  id            String      @id @default(cuid())
+  interventionId String
+  employeeId    String
+  assignedAt    DateTime    @default(now()) // Date d'affectation
+
+  intervention  Intervention @relation(fields: [interventionId], references: [id], onDelete: Cascade)
+  employee      Employee     @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@unique([interventionId, employeeId]) // Empêche un employé d’être affecté plusieurs fois à la même intervention
+}
+
+model Client {
+  id        String   @id @default(cuid())
+  name      String
+  email     String?  @unique
+  phone     String?  @unique
+  address   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  interventions Intervention[]
+}
+
+model Material {
+  id            String   @id @default(cuid())
+  name          String   @unique
+  description   String?
+  quantity      Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  interventions InterventionMaterial[]
+}
+
+model Team {
+    id            String   @id @default(cuid())
+    name String @unique
+    description   String?
+    createdAt     DateTime @default(now())
+    updatedAt     DateTime @updatedAt
+    employees   EmployeeInTeam[]
+}
+
+model EmployeeInTeam {
+  id            String   @id @default(cuid())
+  idEmployee   String
+  employee    Employee @relation(fields: [idEmployee], references: [id], onDelete: Cascade)
+  idTeam String
+  team Team @relation(fields: [idTeam], references: [id], onDelete: Cascade)
+
+  
+}
+
+model InterventionMaterial {
+  id             String      @id @default(cuid())
+  interventionId String
+  materialId     String
+  quantity       Int         @default(1)
+  intervention   Intervention @relation(fields: [interventionId], references: [id], onDelete: Cascade)
+  material       Material     @relation(fields: [materialId], references: [id], onDelete: Cascade)
+}
+
+model InterventionType {
+  id          String          @id @default(cuid())
+  name        String          @unique
+  description String?
+  interventions Intervention[]
+}
+
+model InterventionState {
+  id              String          @id @default(cuid())
+  interventionId  String
+  type            String          // "BEFORE" ou "AFTER"
+  description     String?
+  createdAt       DateTime        @default(now())
+  intervention    Intervention    @relation(fields: [interventionId], references: [id], onDelete: Cascade)
+  photos          InterventionPhoto[]
+}
+
+model InterventionPhoto {
+  id                    String               @id @default(cuid())
+  interventionStateId    String
+  url                   String               // Lien de la photo
+  interventionState      InterventionState    @relation(fields: [interventionStateId], references: [id], onDelete: Cascade)
+}
+
+model Intervention {
+  id          String     @id @default(cuid())
+  title       String
+  description String
+  location    String
+  startDate   DateTime
+  endDate     DateTime
+  status      String     @default("PENDING") // PENDING, IN_PROGRESS, COMPLETED, CANCELLED
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  clientId    String
+  interventionTypeId String
+  client      Client     @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  interventionType  InterventionType     @relation(fields: [interventionTypeId], references: [id])
+  employees   EmployeeIntervention[]
+  materials   InterventionMaterial[]
+  states   InterventionState[]
+
+  
+}

@@ -1,0 +1,96 @@
+.rbc-calendar {
+  font-family: system-ui, -apple-system, sans-serif;
+  /* background-color: rgb(184, 108, 108); */
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  /* overflow-y: scroll; */
+}
+
+/* En-tête du calendrier */
+.rbc-toolbar {
+  padding: 1rem;
+  background-color: #f8f9fa;
+  /* border-bottom: 1px solid #e9ecef; */
+  /* border-radius: 8px 8px 0 0; */
+}
+
+.rbc-toolbar button {
+  color: #1a1a1a;
+  background-color: white;
+  border: 1px solid #dee2e6;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.rbc-toolbar button:hover {
+  background-color: #086dd1;
+  border-color: #cbd3da;
+  color: white;
+}
+
+.rbc-toolbar button.rbc-active {
+  background-color: #000;
+  color: white;
+  border-color: #000;
+}
+
+/* En-tête des jours */
+.rbc-header {
+  padding: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.875rem;
+  color: #4a5568;
+  background-color: #f8f9fa;
+}
+
+/* Cellules des événements */
+.rbc-event {
+  background-color: #000;
+  border-radius: 4px;
+  border: none;
+  padding: 0.25rem 0.5rem;
+}
+
+.rbc-event:hover {
+  background-color: #0052a3;
+}
+
+.rbc-event-content {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+/* Aujourd'hui */
+.rbc-today {
+  background-color: #e6f3ff;
+}
+
+/* Style des cellules */
+.rbc-day-bg {
+  border: 1px solid #e9ecef;
+}
+
+/* Style pour le mode mois */
+.rbc-month-view {
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+}
+
+/* Style pour le mode semaine/jour */
+.rbc-time-view {
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  /* background: #000; */
+}
+
+.rbc-timeslot-group {
+  border-bottom: 1px solid #e9ecef;
+}
+
+/* Style pour les événements sélectionnés */
+
+.rbc-selected {
+  background-color: #004c99 !important;
+}
