@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/select";
 import { Button } from "../ui/button";
 import { Employes } from "@/app/(dashbord)/(routes)/employes/table/columns";
+import { postData, putData } from "@/utils/utilts";
 
 const teamsSchema = z.object({
   name: z.string().min(1, "Le nom est obligatoire"),
@@ -54,57 +55,30 @@ const TeamsForm = ({
     resolver: zodResolver(teamsSchema),
   });
 
+  console.log(initialData);
+
   async function onSubmitModify(data: TeamsFormValues) {
     setIsLoading(true);
-    //  .then((res) => {
-    //       if (res.success) {
-    //         queryteams?.refetch();
-    //         setOpenD(false);
-    //         form.reset();
-    //         setIsLoading(false);
-    //       }
-    //       if (res.success === false) {
-    //         setErrorUnique(res.message);
-    //         setIsLoading(false);
-    //       }
-    //     });
-  }
-
-  const postNewTeams = async (data: TeamsFormValues) => {
-    try {
-      const response = await fetch("/api/teams", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name: data.name,
-          description: data.description,
-          employeeIds: data.employeeIds,
-        }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Une erreur est survenue");
-      }
-
-      return response.json();
-    } catch (error) {
-      setError(
-        error instanceof Error ? error.message : "Une erreur est survenue"
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  async function onSubmit(data: TeamsFormValues) {
     // console.log(data);
 
-    postNewTeams(data).then((res) => {
-      // console.log(res);
+    putData(data, `/api/teams/${initialData.id}`).then((res) => {
+      if (res.success) {
+        queryteams?.refetch();
+        setOpenD(false);
+        form.reset();
+        setIsLoading(false);
+      }
+      if (res.success === false) {
+        setErrorUnique(res.message);
+        setIsLoading(false);
+      }
+    });
+  }
 
+  async function onSubmit(data: TeamsFormValues) {
+    setIsLoading(true);
+
+    postData(data, "/api/teams").then((res) => {
       if (res.success) {
         queryteams?.refetch();
         setOpenD(false);
@@ -117,22 +91,29 @@ const TeamsForm = ({
     });
   }
 
-  // React.useEffect(() => {
-  //   if (initialData) {
-  //     form.reset({
-  //       name: initialData.name,
-  //       description: initialData.description || "",
-  //       // quantity: initialData.quantity,
-  //     });
-  //   }
-  // }, [initialData, form]);
+  React.useEffect(() => {
+    if (initialData) {
+      form.reset({
+        name: initialData?.name,
+        description: initialData?.description || "",
+        employeeIds: initialData?.employees?.map((el: any) => el.id as string),
 
-  console.log(employees?.data);
+        // quantity: initialData.quantity,
+      });
+    }
+  }, [initialData, form]);
 
   return (
     <div>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        <form
+          onSubmit={
+            initialData && initialData.name != ""
+              ? form.handleSubmit(onSubmitModify)
+              : form.handleSubmit(onSubmit)
+          }
+          className="space-y-8"
+        >
           <FormField
             control={form.control}
             name="name"
@@ -186,7 +167,7 @@ const TeamsForm = ({
                   </FormControl>
                   <SelectContent>
                     {employees &&
-                      employees.data?.employees?.map((employee: Employes) => (
+                      employees.data?.data?.map((employee: Employes) => (
                         <SelectItem key={employee.id} value={employee.id}>
                           {`${employee.firstName} ${employee.lastName}`}
                         </SelectItem>
@@ -197,7 +178,7 @@ const TeamsForm = ({
                   {field.value?.map((employeeId) => {
                     const employee =
                       employees &&
-                      employees.data?.employees?.find(
+                      employees.data?.data?.find(
                         (e: any) => e.id === employeeId
                       );
                     return (

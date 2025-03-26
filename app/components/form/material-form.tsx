@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { UseQueryResult } from "@tanstack/react-query";
 import { createMaterial, updateMaterial } from "@/app/actions/materielaction";
+import { postData, putData } from "@/utils/utilts";
 
 const materialSchema = z.object({
   name: z.string().min(1, "Le nom est obligatoire"),
@@ -30,31 +31,14 @@ const MaterialForm = ({
   const [errorUnique, setErrorUnique] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  const cities = [
-    "Abidjan",
-    "Yamoussoukro",
-    "Bouaké",
-    "Daloa",
-    "San-Pédro",
-    "Korhogo",
-    "Man",
-    "Gagnoa",
-    // Ajoutez d'autres villes selon vos besoins
-  ];
-
   const form = useForm<MaterialFormValues>({
     resolver: zodResolver(materialSchema),
   });
 
   async function onSubmitModify(data: MaterialFormValues) {
     setIsLoading(true);
-    console.log(querymaterials);
-    updateMaterial({
-      id: initialData?.id as string,
-      name: data.name,
-      description: data.description || "",
-      quantity: data.quantity,
-    }).then((res) => {
+
+    putData(data, `/api/materiels/${initialData?.id as string}`).then((res) => {
       if (res.success) {
         querymaterials?.refetch();
         setOpenD(false);
@@ -69,25 +53,28 @@ const MaterialForm = ({
   }
 
   async function onSubmit(data: MaterialFormValues) {
-    setIsLoading(true);
+    try {
+      setIsLoading(true);
+      const res = await postData(data, "/api/materiels");
 
-    // console.log(data);
-
-    await createMaterial({
-      name: data.name,
-      description: data.description || "",
-      quantity: data.quantity,
-    }).then((res) => {
       if (res.success) {
         querymaterials?.refetch();
         setOpenD(false);
         form.reset();
-        setIsLoading(false);
+        // Vous pouvez ajouter un toast de succès ici si vous avez une bibliothèque de toast
       } else {
-        setErrorUnique(res.message);
-        setIsLoading(false);
+        setErrorUnique(res.message || "Une erreur est survenue");
       }
-    });
+    } catch (error) {
+      console.error("Erreur lors de la création du matériel:", error);
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Une erreur inattendue s'est produite"
+      );
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   React.useEffect(() => {

@@ -79,3 +79,46 @@ export async function GET(res: Request) {
     );
   }
 }
+
+export async function PUT(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const body = await req.json();
+    const { name, email, phone, address } = body;
+    // const id = params.id;
+
+    console.log("body: " + body);
+    // console.log("params: " + params);
+
+    // Vérifier si une autre équipe a déjà ce nom
+
+    // const updatedTeam = await prisma.client.update({
+    //   where: {
+    //     id: id,
+    //   },
+    //   data: {
+    //     name,
+    //     email,
+    //     phone,
+    //     address,
+    //   },
+    // });
+
+    // return NextResponse.json({
+    //   success: true,
+    //   message: "Équipe mise à jour avec succès",
+    //   data: updatedTeam,
+    // });
+  } catch (err) {
+    console.log(err);
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Une erreur est survenue lors de la mise à jour de l'équipe",
+      },
+      { status: 500 }
+    );
+  }
+}

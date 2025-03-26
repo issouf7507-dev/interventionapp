@@ -7,7 +7,7 @@ import { z } from "zod";
 import { Textarea } from "../ui/textarea";
 import { UseQueryResult } from "@tanstack/react-query";
 import { createClient, updateClient } from "@/app/actions/clientaction";
-import { postData } from "@/utils/utilts";
+import { postData, putData } from "@/utils/utilts";
 // import { createClient, updateClient } from "@/app/actions/clientaction";
 
 const clientSchema = z.object({
@@ -57,15 +57,7 @@ const ClientForm = ({
   async function onSubmitModify(data: ClientFormValues) {
     setIsLoading(true);
 
-    // console.log(queryclients);
-
-    updateClient({
-      id: initialData?.id as string,
-      name: data.name,
-      email: data.email || "",
-      phone: data.phone || "",
-      address: data.address || "",
-    }).then((res) => {
+    putData(data, `/api/clients/${initialData?.id as string}`).then((res) => {
       if (res.success) {
         queryclients?.refetch();
         setOpenD(false);

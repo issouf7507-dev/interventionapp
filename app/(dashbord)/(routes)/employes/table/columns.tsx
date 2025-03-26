@@ -21,7 +21,8 @@ import { UseQueryResult } from "@tanstack/react-query";
 import { AlertDialogAction } from "@/app/components/ui/alert-dialog";
 import CustomDialogAlert from "@/app/components/_comp/CustomDialogAlert";
 import { AlertDialogCancel } from "@/app/components/ui/alert-dialog";
-import { deleteEmployee } from "@/app/actions/employeaction";
+
+import { deleteData } from "@/utils/utilts";
 
 // This type is used to define the shape of our data.
 // You can use a Zod schema here if you want.
@@ -53,8 +54,13 @@ export const columns = (
       const [data, setData] = useState<Employes | null>(null);
 
       const handleDelete = (id: string) => {
-        deleteEmployee(id);
-        queryallemployees.refetch();
+        // deleteEmployee(id);
+        deleteData(`/api/technicients/${id as string}`).then((res) => {
+          if (res.success) {
+            queryallemployees?.refetch();
+          }
+        });
+        // queryallemployees.refetch();
       };
 
       return (

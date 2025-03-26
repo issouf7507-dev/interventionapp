@@ -3,44 +3,31 @@ import prisma from "@/lib/prisma";
 
 export async function PUT(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const body = await req.json();
-    const { name, description } = body;
-    const id = params.id;
+    const { firstName, lastName, email, phoneNumber, address, employeeTypeId } =
+      body;
+    const slug = (await params).id;
 
-    // Vérifier si une autre équipe a déjà ce nom
-    const existingTeam = await prisma.team.findFirst({
-      where: {
-        name,
-        id: {
-          not: id,
-        },
-      },
-    });
-
-    if (existingTeam) {
-      return NextResponse.json({
-        success: false,
-        message: "Le nom doit être unique. Ce nom existe déjà.",
-      });
-    }
-
-    const updatedTeam = await prisma.team.update({
-      where: {
-        id: id,
-      },
+    const employee = await prisma.employee.update({
+      where: { id: slug },
       data: {
-        name,
-        description,
+        firstName,
+        lastName,
+        email,
+        phoneNumber,
+        address,
+        employeeTypeId,
       },
     });
+
+    // Mise à jour séparée de l'utilisateur
 
     return NextResponse.json({
       success: true,
-      message: "Équipe mise à jour avec succès",
-      data: updatedTeam,
+      message: "mise à jour avec succès",
     });
   } catch (err) {
     console.log(err);
@@ -56,35 +43,26 @@ export async function PUT(
 
 export async function DELETE(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = params.id;
-
+    const slug = (await params).id;
     // Vérifier si l'équipe existe
-    const team = await prisma.team.findUnique({
+    const employee = await prisma.employee.delete({
       where: {
-        id: id,
+        id: slug,
       },
     });
-
-    if (!team) {
+    if (!employee) {
       return NextResponse.json(
         { success: false, message: "Équipe non trouvée" },
         { status: 404 }
       );
     }
-
-    // Supprimer l'équipe
-    await prisma.team.delete({
-      where: {
-        id: id,
-      },
-    });
-
+    // Supprimer
     return NextResponse.json({
       success: true,
-      message: "Équipe supprimée avec succès",
+      message: "Suppression effectuee avec succès",
     });
   } catch (err) {
     console.log(err);

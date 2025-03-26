@@ -3,44 +3,23 @@ import prisma from "@/lib/prisma";
 
 export async function PUT(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const body = await req.json();
-    const { name, description } = body;
-    const id = params.id;
+    const { name, description, quantity } = body;
 
-    // Vérifier si une autre équipe a déjà ce nom
-    const existingTeam = await prisma.team.findFirst({
-      where: {
-        name,
-        id: {
-          not: id,
-        },
-      },
-    });
+    const slug = (await params).id;
 
-    if (existingTeam) {
-      return NextResponse.json({
-        success: false,
-        message: "Le nom doit être unique. Ce nom existe déjà.",
-      });
-    }
-
-    const updatedTeam = await prisma.team.update({
-      where: {
-        id: id,
-      },
-      data: {
-        name,
-        description,
-      },
+    const client = await prisma.material.update({
+      where: { id: slug },
+      data: { name, description, quantity },
     });
 
     return NextResponse.json({
       success: true,
       message: "Équipe mise à jour avec succès",
-      data: updatedTeam,
+      client,
     });
   } catch (err) {
     console.log(err);
@@ -56,35 +35,25 @@ export async function PUT(
 
 export async function DELETE(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = params.id;
+    const slug = (await params).id;
 
-    // Vérifier si l'équipe existe
-    const team = await prisma.team.findUnique({
-      where: {
-        id: id,
-      },
+    const client = await prisma.material.delete({
+      where: { id: slug },
     });
 
-    if (!team) {
-      return NextResponse.json(
-        { success: false, message: "Équipe non trouvée" },
-        { status: 404 }
-      );
+    if (!client) {
+      return NextResponse.json({
+        success: false,
+        message: "Client non trouvé",
+      });
     }
-
-    // Supprimer l'équipe
-    await prisma.team.delete({
-      where: {
-        id: id,
-      },
-    });
 
     return NextResponse.json({
       success: true,
-      message: "Équipe supprimée avec succès",
+      message: "Client supprimée avec succès",
     });
   } catch (err) {
     console.log(err);

@@ -6,6 +6,7 @@ import { Textarea } from "../ui/textarea";
 import { createType, updateType } from "@/app/actions/mainaction";
 import { useQuery, UseQueryResult } from "@tanstack/react-query";
 import { EmployesT } from "@/app/(dashbord)/(routes)/type-employes/table/columns";
+import { postData, putData } from "@/utils/utilts";
 
 const typeEmployeSchema = z.object({
   name: z.string().min(1, "Le nom est obligatoire"),
@@ -40,13 +41,7 @@ const TypeEmployeForm = ({
   async function onSubmitModify(data: TypeEmployeFormValues) {
     setIsLoading(true);
 
-    console.log(querytypes);
-
-    await updateType(
-      initialData?.id as string,
-      data.name,
-      data.description
-    ).then((res) => {
+    putData(data, `/api/type-tech/${initialData?.id as string}`).then((res) => {
       if (res.success) {
         querytypes && querytypes.refetch();
         console.log(querytypes);
@@ -67,9 +62,7 @@ const TypeEmployeForm = ({
 
   async function onSubmit(data: TypeEmployeFormValues) {
     setIsLoading(true);
-    console.log(querytypes);
-
-    await createType(data).then((res) => {
+    postData(data, "/api/type-tech").then((res) => {
       if (res.success) {
         querytypes && querytypes.refetch();
         setOpenD(false);

@@ -4,81 +4,83 @@ import prisma from "@/lib/prisma";
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { name, description, employeeIds } = body;
+    const {
+      firstName,
+      lastName,
+      email,
+      phoneNumber,
+      address,
+      employeeTypeId,
+      // userId,
+    } = body;
 
-    const existingTeam = await prisma.team.findUnique({
-      where: {
-        name,
-      },
+    const existingMail = await prisma.employee.findUnique({
+      where: { email },
     });
 
-    if (existingTeam) {
+    if (existingMail) {
       return NextResponse.json({
         success: false,
-        message: "Le nom doit être unique. Ce nom existe déjà.",
+        message: "Cette adresse email existe déjà",
       });
     }
 
-    const team = await prisma.team.create({
-      data: {
-        name,
-        description,
+    const existingPhoneNumber = await prisma.employee.findUnique({
+      where: { phoneNumber },
+    });
 
-        employees: {
-          create: employeeIds.map((employeeId: string) => ({
-            employee: {
-              connect: { id: employeeId },
-            },
-            // assignedAt est défini automatiquement avec @default(now())
-          })),
-        },
+    if (existingPhoneNumber) {
+      return NextResponse.json({
+        success: false,
+        message: "Cette numéro de téléphone existe déjà",
+      });
+    }
+
+    const employee = await prisma.employee.create({
+      data: {
+        firstName,
+        lastName,
+        email,
+        phoneNumber,
+        address,
+        employeeTypeId,
+        // userId,
       },
     });
 
-    if (!team) {
-      throw new Error("Failed to create team");
-    }
-
     return NextResponse.json({
       success: true,
-      message: "Équipe créée avec succès",
+      message: "Technicien créé avec succès",
+      data: employee,
     });
   } catch (err) {
-    console.log(err);
+    console.error(err);
     return NextResponse.json(
       {
         success: false,
-        message: "Une erreur est survenue lors de la création de l'équipe",
+        message: "Une erreur est survenue lors de la création du technicien",
       },
       { status: 500 }
     );
   }
 }
 
-export async function GET(res: Request) {
+export async function GET(req: Request) {
   try {
-    const team = await prisma.team.findMany({
+    const employees = await prisma.employee.findMany({
       include: {
-        employees: {
-          include: {
-            employee: true,
-          },
-        },
+        employeeType: true,
       },
     });
-    if (team.length === 0) {
-      return NextResponse.json(
-        { success: false, message: "Aucune équipe trouvée" },
-        { status: 404 }
-      );
-    }
-    return NextResponse.json({ success: true, data: team });
+
+    return NextResponse.json({ success: true, data: employees });
   } catch (err) {
-    console.log(err);
+    console.error(err);
     return NextResponse.json(
       {
         success: false,
-        message: "Une erreur est survenue lors de la récupération des équipes",
+        message:
+          "Une erreur est survenue lors de la récupération des techniciens",
       },
       { status: 500 }
     );

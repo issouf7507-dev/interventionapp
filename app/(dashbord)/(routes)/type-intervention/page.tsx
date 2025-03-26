@@ -11,20 +11,12 @@ import { getAllTypes } from "@/app/actions/mainaction";
 import { RefetchContext } from "@/provider/RefetchContext";
 import { getAllInterventionTypes } from "@/app/actions/interventiontypeaction";
 import TypeInterventionForm from "@/app/components/form/type-inter-form";
-
-const data: InterventionType[] = [
-  {
-    id: "728ed52f",
-    name: "John",
-    description: "Doe",
-  },
-  // ...
-];
+import { fetchData } from "@/utils/utilts";
 
 function Page() {
   const queryinterventiontypes = useQuery({
     queryKey: ["querytypesaw"],
-    queryFn: getAllInterventionTypes,
+    queryFn: () => fetchData("/api/type-inter"),
   });
 
   const [openD, setOpenD] = useState(false);
@@ -46,7 +38,7 @@ function Page() {
           data={
             queryinterventiontypes.data?.success === false
               ? []
-              : (queryinterventiontypes.data?.types as InterventionType[]) ?? []
+              : (queryinterventiontypes.data?.data as InterventionType[]) ?? []
           }
         />
       </div>

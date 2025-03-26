@@ -3,44 +3,62 @@ import prisma from "@/lib/prisma";
 
 export async function PUT(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const body = await req.json();
-    const { name, description } = body;
-    const id = params.id;
+    const { name, description, employeeIds } = body;
+    const slug = (await params).id;
 
-    // Vérifier si une autre équipe a déjà ce nom
-    const existingTeam = await prisma.team.findFirst({
+    // const existingTeam = await prisma.team.findUnique({
+    //   where: {
+    //     name,
+    //   },
+    // });
+
+    // if (existingTeam) {
+    //   return NextResponse.json({
+    //     success: false,
+    //     message: "Le nom doit être unique. Ce nom existe déjà.",
+    //   });
+    // }
+
+    const employeesExist = await prisma.employee.findMany({
       where: {
-        name,
-        id: {
-          not: id,
-        },
+        id: { in: employeeIds }, // Assure-toi que `employeeIds` contient les bons IDs
       },
     });
 
-    if (existingTeam) {
-      return NextResponse.json({
-        success: false,
-        message: "Le nom doit être unique. Ce nom existe déjà.",
-      });
+    if (employeesExist) {
+      console.log(employeesExist);
+
+      // return NextResponse.json({
+      //   success: false,
+      //   message: "Le nom doit être unique. Ce nom existe déjà.",
+      // });
     }
 
     const updatedTeam = await prisma.team.update({
       where: {
-        id: id,
+        id: slug,
       },
       data: {
         name,
         description,
+
+        employees: {
+          connect: employeeIds.map((id: string) => ({ id })), // Connecter les employés par leurs IDs
+        },
       },
     });
+
+    if (!updatedTeam) {
+      throw new Error("Failed to create team");
+    }
 
     return NextResponse.json({
       success: true,
       message: "Équipe mise à jour avec succès",
-      data: updatedTeam,
     });
   } catch (err) {
     console.log(err);

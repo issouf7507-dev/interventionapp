@@ -29,7 +29,6 @@ export async function POST(req: Request) {
             employee: {
               connect: { id: employeeId },
             },
-            // assignedAt est défini automatiquement avec @default(now())
           })),
         },
       },

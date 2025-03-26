@@ -4,44 +4,43 @@ import prisma from "@/lib/prisma";
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { name, description, quantity } = body;
+    const { name, description } = body;
 
     // Vérifier si un matériel avec ce nom existe déjà
-    const existingMaterial = await prisma.material.findUnique({
+    const existinginterventionType = await prisma.interventionType.findUnique({
       where: {
         name,
       },
     });
 
-    if (existingMaterial) {
+    if (existinginterventionType) {
       return NextResponse.json(
         {
           success: false,
-          message: "Un matériel avec ce nom existe déjà",
+          message: "cette data n'existe déjà",
         },
         { status: 400 }
       );
     }
 
-    const materiels = await prisma.material.create({
+    const interventionType = await prisma.interventionType.create({
       data: {
         name,
         description,
-        quantity: quantity || 0,
       },
     });
 
     return NextResponse.json({
       success: true,
-      message: "Matériel créé avec succès",
-      data: materiels,
+      message: "data créé avec succès",
+      data: interventionType,
     });
   } catch (err) {
     console.error(err);
     return NextResponse.json(
       {
         success: false,
-        message: "Une erreur est survenue lors de la création du matériel",
+        message: "Une erreur est survenue lors de la création ",
       },
       { status: 500 }
     );
@@ -50,19 +49,18 @@ export async function POST(req: Request) {
 
 export async function GET(req: Request) {
   try {
-    const materials = await prisma.material.findMany();
+    const interventionTypes = await prisma.interventionType.findMany();
 
     return NextResponse.json({
       success: true,
-      data: materials,
+      data: interventionTypes,
     });
   } catch (err) {
     console.error(err);
     return NextResponse.json(
       {
         success: false,
-        message:
-          "Une erreur est survenue lors de la récupération des matériels",
+        message: "Une erreur est survenue lors de la récupération",
       },
       { status: 500 }
     );

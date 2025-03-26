@@ -9,6 +9,7 @@ import {
 } from "@/app/actions/interventiontypeaction";
 import { useQuery, UseQueryResult } from "@tanstack/react-query";
 import { EmployesT } from "@/app/(dashbord)/(routes)/type-employes/table/columns";
+import { postData, putData } from "@/utils/utilts";
 
 const typeEmployeSchema = z.object({
   name: z.string().min(1, "Le nom est obligatoire"),
@@ -43,36 +44,38 @@ const TypeInterventionForm = ({
   async function onSubmitModify(data: TypeEmployeFormValues) {
     setIsLoading(true);
 
-    console.log(queryinterventiontypes);
+    // await updateInterventionType(
+    //   initialData?.id as string,
+    //   data.name,
+    //   data.description
+    // )
 
-    await updateInterventionType(
-      initialData?.id as string,
-      data.name,
-      data.description
-    ).then((res) => {
-      if (res.success) {
-        queryinterventiontypes && queryinterventiontypes.refetch();
-        console.log(queryinterventiontypes);
-        setOpenD(false);
-        form.reset();
-        setIsLoading(false);
-        console.log(res);
+    putData(data, `/api/type-inter/${initialData?.id as string}`).then(
+      (res) => {
+        if (res.success) {
+          queryinterventiontypes && queryinterventiontypes.refetch();
+          console.log(queryinterventiontypes);
+          setOpenD(false);
+          form.reset();
+          setIsLoading(false);
+          console.log(res);
+        }
+        if (res.success == false) {
+          queryinterventiontypes && queryinterventiontypes.refetch();
+          setErrorUnique(res.message);
+          form.reset();
+          console.log(res);
+          setIsLoading(false);
+        }
       }
-      if (res.success == false) {
-        queryinterventiontypes && queryinterventiontypes.refetch();
-        setErrorUnique(res.message);
-        form.reset();
-        console.log(res);
-        setIsLoading(false);
-      }
-    });
+    );
   }
 
   async function onSubmit(data: TypeEmployeFormValues) {
     setIsLoading(true);
-    console.log(queryinterventiontypes);
 
-    await createInterventionType(data).then((res) => {
+    // await createInterventionType(data)
+    postData(data, "/api/type-inter").then((res) => {
       if (res.success) {
         queryinterventiontypes && queryinterventiontypes.refetch();
         setOpenD(false);

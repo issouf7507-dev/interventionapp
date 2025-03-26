@@ -9,13 +9,14 @@ import { columns, Employes } from "./table/columns";
 import EmployeeForm from "@/app/components/form/employee-form";
 import { useQuery } from "@tanstack/react-query";
 import { getAllEmployees } from "@/app/actions/employeaction";
+import { fetchData } from "@/utils/utilts";
 
 function Page() {
   const [openD, setOpenD] = useState(false);
 
   const queryallemployees = useQuery({
     queryKey: ["allemployees"],
-    queryFn: getAllEmployees,
+    queryFn: () => fetchData("/api/technicients"),
   });
 
   console.log(queryallemployees.data);
@@ -35,7 +36,7 @@ function Page() {
           data={
             queryallemployees.data?.success === false
               ? []
-              : (queryallemployees.data?.employees as Employes[]) ?? []
+              : (queryallemployees.data?.data as Employes[]) ?? []
           }
         />
       </div>

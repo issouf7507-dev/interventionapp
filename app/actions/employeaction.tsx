@@ -80,24 +80,6 @@ export async function updateEmployee(
   employeeTypeId: string
 ) {
   try {
-    // const existingMail = await prisma.employee.findUnique({
-    //   where: { email },
-    // });
-
-    // if (existingMail) {
-    //   return { success: false, message: "Cette adresse email existe déjà" };
-    // }
-
-    // const existingPhoneNumber = await prisma.employee.findUnique({
-    //   where: { phoneNumber },
-    // });
-
-    // if (existingPhoneNumber) {
-    //   return {
-    //     success: false,
-    //     message: "Cette numéro de téléphone existe déjà",
-    //   };
-    // }
     const employee = await prisma.employee.update({
       where: { id },
       data: {

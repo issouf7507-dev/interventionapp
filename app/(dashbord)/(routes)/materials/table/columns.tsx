@@ -23,6 +23,7 @@ import CustomDialogAlert from "@/app/components/_comp/CustomDialogAlert";
 import { AlertDialogCancel } from "@/app/components/ui/alert-dialog";
 import { deleteMaterial } from "@/app/actions/materielaction";
 import MaterialForm from "@/app/components/form/material-form";
+import { deleteData } from "@/utils/utilts";
 
 // This type is used to define the shape of our data.
 // You can use a Zod schema here if you want.
@@ -49,8 +50,12 @@ export const columns = (
       const [data, setData] = useState<Materials | null>(null);
 
       const handleDelete = (id: string) => {
-        deleteMaterial(id);
-        queryallmaterials.refetch();
+        // deleteMaterial(id);
+        deleteData(`/api/materiels/${id as string}`).then((res) => {
+          if (res.success) {
+            queryallmaterials?.refetch();
+          }
+        });
       };
 
       return (

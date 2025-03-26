@@ -8,13 +8,14 @@ import { useQuery } from "@tanstack/react-query";
 import { getAllMaterial } from "@/app/actions/materielaction";
 import { DataTable } from "./table/data-table";
 import MaterialForm from "@/app/components/form/material-form";
+import { fetchData } from "@/utils/utilts";
 
 const Page = () => {
   const [openD, setOpenD] = useState(false);
 
   const queryallmaterials = useQuery({
     queryKey: ["queryallmaterials"],
-    queryFn: getAllMaterial,
+    queryFn: () => fetchData("/api/materiels"),
   });
 
   return (
@@ -32,7 +33,7 @@ const Page = () => {
           data={
             queryallmaterials.data?.success === false
               ? []
-              : (queryallmaterials.data?.materiels as Materials[]) ?? []
+              : (queryallmaterials.data?.data as Materials[]) ?? []
           }
         />
       </div>

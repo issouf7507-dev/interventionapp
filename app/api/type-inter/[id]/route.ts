@@ -11,7 +11,7 @@ export async function PUT(
 
     const slug = (await params).id;
 
-    const client = await prisma.employeeType.update({
+    const interventionType = await prisma.interventionType.update({
       where: { id: slug },
       data: { name, description },
     });
@@ -19,7 +19,7 @@ export async function PUT(
     return NextResponse.json({
       success: true,
       message: "Équipe mise à jour avec succès",
-      client,
+      interventionType,
     });
   } catch (err) {
     console.log(err);
@@ -40,7 +40,7 @@ export async function DELETE(
   try {
     const slug = (await params).id;
 
-    const client = await prisma.employeeType.delete({
+    const client = await prisma.interventionType.delete({
       where: { id: slug },
     });
 

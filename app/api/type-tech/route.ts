@@ -4,44 +4,38 @@ import prisma from "@/lib/prisma";
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { name, description, employeeIds } = body;
+    const { name, description } = body;
 
-    const existingTeam = await prisma.team.findUnique({
+    const existingType = await prisma.employeeType.findUnique({
       where: {
         name,
       },
     });
 
-    if (existingTeam) {
+    if (existingType) {
       return NextResponse.json({
         success: false,
         message: "Le nom doit être unique. Ce nom existe déjà.",
       });
     }
 
-    const team = await prisma.team.create({
+    const type = await prisma.employeeType.create({
       data: {
         name,
         description,
-
-        employees: {
-          create: employeeIds.map((employeeId: string) => ({
-            employee: {
-              connect: { id: employeeId },
-            },
-            // assignedAt est défini automatiquement avec @default(now())
-          })),
-        },
       },
     });
 
-    if (!team) {
-      throw new Error("Failed to create team");
+    if (!type) {
+      return NextResponse.json({
+        success: false,
+        message: "une erreur c'est produite",
+      });
     }
 
     return NextResponse.json({
       success: true,
-      message: "Équipe créée avec succès",
+      message: "Type created successfully",
     });
   } catch (err) {
     console.log(err);
@@ -57,22 +51,16 @@ export async function POST(req: Request) {
 
 export async function GET(res: Request) {
   try {
-    const team = await prisma.team.findMany({
-      include: {
-        employees: {
-          include: {
-            employee: true,
-          },
-        },
-      },
-    });
-    if (team.length === 0) {
+    const employeeType = await prisma.employeeType.findMany();
+
+    if (!employeeType) {
       return NextResponse.json(
-        { success: false, message: "Aucune équipe trouvée" },
+        { success: false, message: "Aucune data trouvée" },
         { status: 404 }
       );
     }
-    return NextResponse.json({ success: true, data: team });
+
+    return NextResponse.json({ success: true, data: employeeType });
   } catch (err) {
     console.log(err);
     return NextResponse.json(

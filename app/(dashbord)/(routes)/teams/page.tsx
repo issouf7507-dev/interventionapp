@@ -15,7 +15,7 @@ const Page = () => {
 
   const queryallemployees = useQuery({
     queryKey: ["allemployees2"],
-    queryFn: getAllEmployees,
+    queryFn: () => fetchData("/api/technicients"),
   });
 
   const queryallteams = useQuery({
@@ -23,7 +23,7 @@ const Page = () => {
     queryFn: () => fetchData("/api/teams"),
   });
 
-  console.log(queryallteams?.data);
+  // console.log(queryallteams?.data);
 
   return (
     <div>
@@ -36,7 +36,7 @@ const Page = () => {
 
       <div className="px-5 mt-10">
         <DataTable
-          columns={columns(queryallteams)}
+          columns={columns(queryallteams, queryallemployees)}
           data={
             queryallteams.data?.success === false
               ? []
@@ -54,7 +54,7 @@ const Page = () => {
           <TeamsForm
             openD={openD}
             setOpenD={setOpenD}
-            // initialData={data}
+            // initialData={queryallteams.data}
             employees={queryallemployees && queryallemployees}
             queryteams={queryallteams && queryallteams}
           />

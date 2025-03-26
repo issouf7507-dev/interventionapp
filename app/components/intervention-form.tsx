@@ -37,6 +37,7 @@ import { Materials } from "../(dashbord)/(routes)/materials/table/columns";
 import { createIntervention } from "../actions/interventionaction";
 import { ScrollArea, ScrollBar } from "./ui/scroll-area";
 import { useState } from "react";
+import { postData } from "@/utils/utilts";
 
 const interventionFormSchema = z.object({
   title: z.string().min(1, "Le titre est requis"),
@@ -62,7 +63,7 @@ interface InterventionFormProps {
   employees: UseQueryResult<any, Error>;
   materials: UseQueryResult<any, Error>;
   queryallinterventions: UseQueryResult<any, Error>;
-  onSubmit: (data: InterventionFormValues) => void;
+
   openD: boolean;
   setOpenD: (openD: boolean) => void;
 }
@@ -130,7 +131,8 @@ export function InterventionForm({
 
   async function onSubmit(data: InterventionFormValues) {
     setIsLoading(true);
-    createIntervention(data).then((res) => {
+    // createIntervention(data)
+    postData(data, "/api/interventions").then((res) => {
       queryallinterventions?.refetch();
       form.reset();
       setOpenD(false);
@@ -414,7 +416,7 @@ export function InterventionForm({
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {clientQuery.data?.client?.map((client: any) => (
+                    {clientQuery.data?.data?.map((client: any) => (
                       <SelectItem key={client.id} value={client.id}>
                         {client.name}
                       </SelectItem>
@@ -442,7 +444,7 @@ export function InterventionForm({
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {interventionTypes.data?.types?.map((type: any) => (
+                    {interventionTypes.data?.data?.map((type: any) => (
                       <SelectItem key={type.id} value={type.id}>
                         {type.name}
                       </SelectItem>
@@ -476,7 +478,7 @@ export function InterventionForm({
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {employeeQuery.data?.employees?.map((employee: Employes) => (
+                  {employeeQuery.data?.data?.map((employee: Employes) => (
                     <SelectItem key={employee.id} value={employee.id}>
                       {`${employee.firstName} ${employee.lastName}`}
                     </SelectItem>
@@ -485,7 +487,7 @@ export function InterventionForm({
               </Select>
               <div className="mt-2">
                 {field.value?.map((employeeId) => {
-                  const employee = employeeQuery.data?.employees?.find(
+                  const employee = employeeQuery.data?.data?.find(
                     (e: any) => e.id === employeeId
                   );
                   return (
@@ -504,7 +506,6 @@ export function InterventionForm({
                           field.onChange(
                             field.value?.filter((id) => id !== employeeId)
                           );
-                          // Si plus aucun employé sélectionné, on reset le Select
                         }}
                       >
                         ×
@@ -539,18 +540,16 @@ export function InterventionForm({
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {materialQuery?.data?.materiels?.map(
-                    (materiel: Materials) => (
-                      <SelectItem key={materiel.id} value={materiel.id}>
-                        {`${materiel.name}`}
-                      </SelectItem>
-                    )
-                  )}
+                  {materialQuery?.data?.data?.map((materiel: Materials) => (
+                    <SelectItem key={materiel.id} value={materiel.id}>
+                      {`${materiel.name}`}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
               <div className="mt-2">
                 {field.value?.map((materielId) => {
-                  const materiel = materialQuery?.data?.materiels?.find(
+                  const materiel = materialQuery?.data?.data?.find(
                     (e: any) => e.id === materielId
                   );
                   return (

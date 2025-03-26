@@ -9,11 +9,16 @@ import {
   GalleryVerticalEnd,
   Home,
   Map,
+  Pickaxe,
   PieChart,
   Settings2,
   SquareTerminal,
   User2,
+  UserCog,
   UserPlus,
+  UserRoundPen,
+  Users,
+  Wrench,
 } from "lucide-react";
 
 import { NavUser } from "@/components/nav-user";
@@ -61,37 +66,40 @@ const dataMain = {
     {
       title: "Techniciens",
       url: "/employes",
-      icon: User2,
-      // isActive: true,
-    },
-    {
-      title: "Types de techniciens",
-      url: "/type-employes",
-      icon: UserPlus,
-      // isActive: true,
-    },
-    {
-      title: "Materials",
-      url: "/materials",
-      icon: UserPlus,
-      // isActive: true,
-    },
-    {
-      title: "Type d'intervention",
-      url: "/type-intervention",
-      icon: UserPlus,
-      // isActive: true,
-    },
-    {
-      title: "Interventions",
-      url: "/interventions",
-      icon: CirclePlus,
+      icon: UserCog,
       // isActive: true,
     },
     {
       title: "Equipes",
       url: "/teams",
+      icon: Users,
+      // isActive: true,
+    },
+    {
+      title: "Types de techniciens",
+      url: "/type-employes",
+      icon: UserRoundPen,
+      // <UserRoundPen />
+      // isActive: true,
+    },
+    {
+      title: "Materials",
+      url: "/materials",
+      icon: Wrench,
+      // <Wrench />
+      // isActive: true,
+    },
+    {
+      title: "Type d'intervention",
+      url: "/type-intervention",
       icon: CirclePlus,
+      // isActive: true,
+    },
+    {
+      title: "Interventions",
+      url: "/interventions",
+      icon: Pickaxe,
+
       // isActive: true,
     },
   ],

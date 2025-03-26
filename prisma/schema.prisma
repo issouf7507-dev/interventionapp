@@ -45,7 +45,7 @@ model User {
   accounts      Account[]
   sessions      Session[]
   role          Role?     @relation(fields: [roleId], references: [id])
-  employee      Employee?
+  // employee      Employee?
 }
 
 model VerificationToken {
@@ -72,14 +72,14 @@ model EmployeeType {
 
 model Employee {
   id                String        @id @default(cuid())
-  userId            String       @unique
+  // userId            String       
   employeeTypeId    String
   firstName         String
   lastName          String
   email             String?       @unique
   phoneNumber       String?       @unique
   address           String?
-  user              User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // user              User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   employeeType      EmployeeType @relation(fields: [employeeTypeId], references: [id])
   interventions     EmployeeIntervention[]
   team   EmployeeInTeam[]
@@ -133,8 +133,8 @@ model EmployeeInTeam {
   employee    Employee @relation(fields: [idEmployee], references: [id], onDelete: Cascade)
   idTeam String
   team Team @relation(fields: [idTeam], references: [id], onDelete: Cascade)
-
-  
+  interventionId String?
+intervention    Intervention? @relation(fields: [interventionId], references: [id], onDelete: Cascade)
 }
 
 model InterventionMaterial {
@@ -187,6 +187,7 @@ model Intervention {
   employees   EmployeeIntervention[]
   materials   InterventionMaterial[]
   states   InterventionState[]
+  employeeinteam   EmployeeInTeam[]
 
   
 }

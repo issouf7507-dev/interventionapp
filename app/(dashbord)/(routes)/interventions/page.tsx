@@ -28,6 +28,7 @@ import { getAllInterventionTypes } from "@/app/actions/interventiontypeaction";
 import { getAllInterventions } from "@/app/actions/interventionaction";
 import { columns, Intervention } from "./table/columns";
 import { DataTable } from "./table/data-table";
+import { fetchData } from "@/utils/utilts";
 
 function Page() {
   const [openD, setOpenD] = useState(false);
@@ -47,30 +48,30 @@ function Page() {
 
   const queryallclients = useQuery({
     queryKey: ["allclinets2"],
-    queryFn: getAllClients,
+    queryFn: () => fetchData("/api/clients"),
   });
 
   const queryallemployees = useQuery({
     queryKey: ["allemployees2"],
-    queryFn: getAllEmployees,
+    queryFn: () => fetchData("/api/technicients"),
   });
 
   const queryallmaterials = useQuery({
     queryKey: ["queryallmaterials2"],
-    queryFn: getAllMaterial,
+    queryFn: () => fetchData("/api/materiels"),
   });
 
   const queryinterventiontypes = useQuery({
     queryKey: ["querytypesaw2"],
-    queryFn: getAllInterventionTypes,
+    queryFn: () => fetchData("/api/type-inter"),
   });
 
   const queryallinterventions = useQuery({
     queryKey: ["queryallinterventions2"],
-    queryFn: getAllInterventions,
+    queryFn: () => fetchData("/api/interventions"),
   });
 
-  console.log(queryallinterventions.data?.interventions);
+  // console.log(queryallinterventions.data?.interventions);
 
   return (
     <div>
@@ -110,8 +111,7 @@ function Page() {
               data={
                 queryallinterventions.data?.success === false
                   ? []
-                  : (queryallinterventions.data
-                      ?.interventions as Intervention[]) ?? []
+                  : (queryallinterventions.data?.data as Intervention[]) ?? []
               }
             />
           </div>
@@ -119,27 +119,7 @@ function Page() {
       ) : (
         <div className="px-5 mt-10">
           <Calendar
-            events={
-              //   [
-              //   {
-              //     id: "1",
-              //     start: new Date("2025-03-16T09:30:00Z"),
-              //     end: new Date("2025-03-16T14:30:00Z"),
-              //     title: "event A",
-              //     color: "pink",
-              //   },
-              //   {
-              //     id: "2",
-              //     start: new Date("2025-03-16T10:00:00Z"),
-              //     end: new Date("2025-03-16T10:30:00Z"),
-              //     title: "event B",
-              //     color: "blue",
-              //   },
-              // ]
-
-              (queryallinterventions.data?.interventions as Intervention[]) ??
-              []
-            }
+            events={(queryallinterventions.data?.data as Intervention[]) ?? []}
           >
             <div className="h-dvh py-6 flex flex-col">
               <div className="flex px-6 items-center gap-2 mb-6">
@@ -214,7 +194,6 @@ function Page() {
             queryallinterventions={
               queryallinterventions && queryallinterventions
             }
-            onSubmit={() => {}}
           />
         </div>
       </CustomDialog>

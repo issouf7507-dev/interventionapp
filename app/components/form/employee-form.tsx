@@ -14,6 +14,7 @@ import { getAllTypes } from "@/app/actions/mainaction";
 import { createEmployee, updateEmployee } from "@/app/actions/employeaction";
 import { Employes } from "@/app/(dashbord)/(routes)/employes/table/columns";
 import { useSession } from "next-auth/react";
+import { postData, putData } from "@/utils/utilts";
 
 const employeeSchema = z.object({
   firstName: z.string().min(1, "Le prénom est obligatoire"),
@@ -42,6 +43,7 @@ const EmployeeForm = ({
   const [error, setError] = useState<string | null>(null);
   const [errorUnique, setErrorUnique] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [idElement, setIdElement] = useState("");
   const { data: session, status: sessionStatus } = useSession();
 
   const form = useForm<EmployeeFormValues>({
@@ -56,38 +58,26 @@ const EmployeeForm = ({
   //   console.log(typesData);
 
   async function onSubmitModify(data: EmployeeFormValues) {
-    setIsLoading(true);
+    // setIsLoading(true);
     // console.log(initialData?.id as string);
-    updateEmployee(
-      initialData?.id as string,
-      data.firstName,
-      data.lastName,
-      data.email || undefined,
-      data.phoneNumber || undefined,
-      data.address || undefined,
-      data.employeeTypeId
-    ).then((res) => {
-      if (res.success) {
-        queryemployees && queryemployees.refetch();
-        setOpenD(false);
-        form.reset();
-        setIsLoading(false);
+    putData({ ...data }, `/api/technicients/${initialData?.id as string}`).then(
+      (res) => {
+        if (res.success) {
+          queryemployees && queryemployees.refetch();
+          setOpenD(false);
+          form.reset();
+          setIsLoading(false);
+        }
       }
-    });
+    );
   }
 
-  async function onSubmit(data: EmployeeFormValues) {
-    setIsLoading(true);
+  console.log(initialData);
 
-    await createEmployee({
-      firstName: data.firstName,
-      lastName: data.lastName,
-      email: data.email || undefined,
-      phoneNumber: data.phoneNumber || undefined,
-      address: data.address || undefined,
-      employeeTypeId: data.employeeTypeId,
-      userId: session?.user?.id as string,
-    }).then((res) => {
+  async function onSubmit(data: EmployeeFormValues) {
+    // setIsLoading(true);
+
+    postData(data, "/api/technicients").then((res) => {
       if (res.success) {
         queryemployees && queryemployees.refetch();
         setOpenD(false);
@@ -96,7 +86,7 @@ const EmployeeForm = ({
         console.log(res.message);
       }
       if (res.success === false) {
-        // setErrorUnique(res.message);
+        setErrorUnique(res.message);
         console.log(res.message);
 
         setIsLoading(false);

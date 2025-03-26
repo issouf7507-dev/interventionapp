@@ -11,15 +11,6 @@ import { getAllTypes } from "@/app/actions/mainaction";
 import { RefetchContext } from "@/provider/RefetchContext";
 import TypeEmployeForm from "@/app/components/form/type-employe-form";
 
-const data: EmployesT[] = [
-  {
-    id: "728ed52f",
-    name: "John",
-    description: "Doe",
-  },
-  // ...
-];
-
 function Page() {
   const querytypes = useQuery({
     queryKey: ["querytypes"],

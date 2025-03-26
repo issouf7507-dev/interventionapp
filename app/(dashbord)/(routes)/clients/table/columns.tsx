@@ -23,6 +23,7 @@ import { AlertDialogAction } from "@/app/components/ui/alert-dialog";
 import CustomDialogAlert from "@/app/components/_comp/CustomDialogAlert";
 import { AlertDialogCancel } from "@/app/components/ui/alert-dialog";
 import { deleteClient } from "@/app/actions/clientaction";
+import { deleteData } from "@/utils/utilts";
 
 // This type is used to define the shape of our data.
 // You can use a Zod schema here if you want.
@@ -35,7 +36,7 @@ export type Clients = {
 };
 
 export const columns = (
-  queryallemployees: UseQueryResult<any, Error>
+  queryallclient: UseQueryResult<any, Error>
 ): ColumnDef<Clients>[] => [
   { accessorKey: "name", header: "Nom" },
   { accessorKey: "email", header: "Email" },
@@ -51,8 +52,11 @@ export const columns = (
       const [data, setData] = useState<Clients | null>(null);
 
       const handleDelete = (id: string) => {
-        deleteClient(id);
-        queryallemployees.refetch();
+        deleteData(`/api/clients/${id as string}`).then((res) => {
+          if (res.success) {
+            queryallclient?.refetch();
+          }
+        });
       };
 
       return (
@@ -96,7 +100,7 @@ export const columns = (
               openD={openD}
               setOpenD={setOpenD}
               initialData={data}
-              queryclients={queryallemployees && queryallemployees}
+              queryclients={queryallclient && queryallclient}
             />
           </CustomDialog>
 

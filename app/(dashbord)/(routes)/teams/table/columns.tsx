@@ -23,6 +23,7 @@ import TypeEmployeForm from "@/app/components/form/type-employe-form";
 import { useRefetch } from "@/provider/RefetchContext";
 import { UseQueryResult } from "@tanstack/react-query";
 import { deleteTypess } from "@/app/actions/mainaction";
+import TeamsForm from "@/app/components/form/teams-form";
 
 // This type is used to define the shape of our data.
 // You can use a Zod schema here if you want.
@@ -30,10 +31,12 @@ export type Teams = {
   id: String;
   name: String;
   description: String;
+  // employees: Array<{}>
 };
 
 export const columns = (
-  querytypes: UseQueryResult<any | Error>
+  queryallteams: UseQueryResult<any | Error>,
+  queryallemployees: UseQueryResult<any | Error>
 ): ColumnDef<Teams>[] => [
   { accessorKey: "name", header: "Nom" },
   { accessorKey: "description", header: "Description" },
@@ -47,7 +50,7 @@ export const columns = (
 
       const handleDelete = (id: string) => {
         deleteTypess(id);
-        querytypes.refetch();
+        queryallteams.refetch();
       };
 
       return (
@@ -80,11 +83,14 @@ export const columns = (
             setOpenD={setOpenD}
             title="  Modifier un type d'employé"
           >
-            <TypeEmployeForm
+            <TeamsForm
               openD={openD}
               setOpenD={setOpenD}
               initialData={data}
-              querytypes={querytypes}
+              queryteams={queryallteams && queryallteams}
+              // querytypes={queryallteams}
+
+              employees={queryallemployees && queryallemployees}
             />
           </CustomDialog>
 
