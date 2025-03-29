@@ -54,9 +54,9 @@ export const putData = async (data: any, urlApi: string) => {
   try {
     const response = await fetch(urlApi, {
       method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      // headers: {
+      //   "Content-Type": "application/json",
+      // },
       body: JSON.stringify(data),
     });
 

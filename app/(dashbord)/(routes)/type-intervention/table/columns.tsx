@@ -24,6 +24,7 @@ import { useRefetch } from "@/provider/RefetchContext";
 import { UseQueryResult } from "@tanstack/react-query";
 import { deleteInterventionType } from "@/app/actions/interventiontypeaction";
 import TypeInterventionForm from "@/app/components/form/type-inter-form";
+import { deleteData } from "@/utils/utilts";
 
 // This type is used to define the shape of our data.
 // You can use a Zod schema here if you want.
@@ -47,9 +48,14 @@ export const columns = (
       const [data, setData] = useState<InterventionType | null>(null);
 
       const handleDelete = (id: string) => {
-        deleteInterventionType(id);
-        console.log(id);
-        queryinterventiontypes.refetch();
+        // deleteInterventionType(id);
+        deleteData(`/api/type-inter/${id}`).then((res) => {
+          if (res.success) {
+            // querytypes?.refetch();
+            queryinterventiontypes.refetch();
+          }
+        });
+        // console.log(id);
       };
 
       return (

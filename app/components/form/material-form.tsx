@@ -102,7 +102,7 @@ const MaterialForm = ({
             <input
               id="name"
               type="text"
-              placeholder="Nom du client"
+              placeholder="Nom du material"
               disabled={isLoading}
               {...form.register("name")}
               className="w-full rounded-md border p-2"

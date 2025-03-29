@@ -21,17 +21,16 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import CustomDialog from "@/app/components/_comp/CustomDialog";
 import { InterventionForm } from "@/app/components/intervention-form";
 import { useQuery } from "@tanstack/react-query";
-import { getAllClients } from "@/app/actions/clientaction";
-import { getAllEmployees } from "@/app/actions/employeaction";
-import { getAllMaterial } from "@/app/actions/materielaction";
-import { getAllInterventionTypes } from "@/app/actions/interventiontypeaction";
-import { getAllInterventions } from "@/app/actions/interventionaction";
 import { columns, Intervention } from "./table/columns";
 import { DataTable } from "./table/data-table";
 import { fetchData } from "@/utils/utilts";
+import AddressAutocomplete from "@/app/components/form/google";
+import { LocationData } from "@/app/components/form/google";
+import LocationAutocomplete from "@/app/components/form/mailbox";
 
 function Page() {
   const [openD, setOpenD] = useState(false);
+  const [locationData, setLocationData] = useState<LocationData | null>(null);
 
   const [activeTab, setActiveTab] = useState("Liste des interventions");
 
@@ -71,16 +70,21 @@ function Page() {
     queryFn: () => fetchData("/api/interventions"),
   });
 
-  // console.log(queryallinterventions.data?.interventions);
+  const queryallteams = useQuery({
+    queryKey: ["allclinets"],
+    queryFn: () => fetchData("/api/teams"),
+  });
+
+  // console.log(queryallinterventions.data?.data);
 
   return (
     <div>
       <Header title="Interventions" />
-
       <div className="px-5 flex justify-between">
         <div>
           <Button onClick={() => setOpenD(true)}>+</Button>
         </div>
+
         <div className="dark:bg-neutral-800 bg-gray-200 rounded-lg p-1">
           <div className="flex items-center gap-2 justify-center">
             {listTab.map((item) => (
@@ -97,11 +101,9 @@ function Page() {
           </div>
         </div>
       </div>
-
       {/* <div className="px-5 mt-10">
         <MyCalendar onSelectEvent={handleEventSelect} />
       </div> */}
-
       {activeTab == "Liste des interventions" ? (
         <div className="px-5 mt-10">
           {/* <MyCalendar onSelectEvent={handleEventSelect} /> */}
@@ -177,11 +179,10 @@ function Page() {
           </Calendar>
         </div>
       )}
-
       <CustomDialog
         openD={openD}
         setOpenD={setOpenD}
-        title="Ajouter un materiel"
+        title="Ajouter une intervention"
       >
         <div>
           <InterventionForm
@@ -194,6 +195,7 @@ function Page() {
             queryallinterventions={
               queryallinterventions && queryallinterventions
             }
+            queryallteams={queryallteams && queryallteams}
           />
         </div>
       </CustomDialog>

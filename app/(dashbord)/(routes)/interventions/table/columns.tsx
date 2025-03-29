@@ -21,6 +21,7 @@ import { format } from "date-fns";
 
 import { EtatIntervention } from "@/app/components/etat-intervention";
 import CustomDialogRepport from "@/app/components/_comp/CustomDialogRepport";
+import CustomDialogMin from "@/app/components/_comp/CustomDialogMin";
 
 // Type défini pour les interventions
 export type Intervention = {
@@ -31,7 +32,14 @@ export type Intervention = {
   startDate: Date;
   endDate: Date;
   status: string;
+  latitude: number;
+  longitude: number;
+  placeId: string;
+  postalCode: string;
+  region: string;
+  country: string;
   clientId: string;
+  selectionType: string;
   interventionTypeId: string;
   createdAt: Date;
   updatedAt: Date;
@@ -41,9 +49,27 @@ export type Intervention = {
     phone?: string;
     address?: string;
   };
+
   interventionType?: {
     name: string;
   };
+
+  teamlId: string;
+  team?: {
+    createdAt: string;
+    description: string;
+
+    employees: Array<{
+      id: string;
+      idEmployee: string;
+      idTeam: string;
+    }>;
+
+    id: string;
+    name: string;
+    updatedAt: string;
+  };
+
   employees: Array<{
     id: string;
     employee: {
@@ -148,7 +174,7 @@ export const columns = (
     header: "Techniciens",
     cell: ({ row }) => {
       const employees = row.original.employees;
-      if (!employees || employees.length === 0) return "Aucun";
+      if (!employees || employees.length === 0) return "N/A";
 
       // Afficher les 2 premiers techniciens + "et X autres" si plus de 2
       const displayedEmployees = employees.slice(0, 2);
@@ -166,6 +192,16 @@ export const columns = (
       );
     },
   },
+
+  {
+    accessorKey: "team.name",
+    header: "Equipe",
+    cell: ({ row }) => {
+      const intervention = row.original;
+      return intervention.team?.name || "N/A";
+    },
+  },
+
   {
     id: "actions",
     cell: ({ row }) => {

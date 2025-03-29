@@ -10,19 +10,6 @@ export async function PUT(
     const { name, description, employeeIds } = body;
     const slug = (await params).id;
 
-    // const existingTeam = await prisma.team.findUnique({
-    //   where: {
-    //     name,
-    //   },
-    // });
-
-    // if (existingTeam) {
-    //   return NextResponse.json({
-    //     success: false,
-    //     message: "Le nom doit être unique. Ce nom existe déjà.",
-    //   });
-    // }
-
     const employeesExist = await prisma.employee.findMany({
       where: {
         id: { in: employeeIds }, // Assure-toi que `employeeIds` contient les bons IDs
@@ -30,12 +17,12 @@ export async function PUT(
     });
 
     if (employeesExist) {
-      console.log(employeesExist);
+      // console.log(employeesExist);
 
-      // return NextResponse.json({
-      //   success: false,
-      //   message: "Le nom doit être unique. Ce nom existe déjà.",
-      // });
+      return NextResponse.json({
+        success: false,
+        message: "Le nom doit être unique. Ce nom existe déjà.",
+      });
     }
 
     const updatedTeam = await prisma.team.update({
@@ -74,15 +61,15 @@ export async function PUT(
 
 export async function DELETE(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = params.id;
+    const slug = (await params).id;
 
     // Vérifier si l'équipe existe
     const team = await prisma.team.findUnique({
       where: {
-        id: id,
+        id: slug,
       },
     });
 
@@ -96,7 +83,7 @@ export async function DELETE(
     // Supprimer l'équipe
     await prisma.team.delete({
       where: {
-        id: id,
+        id: slug,
       },
     });
 

@@ -24,6 +24,7 @@ import { useRefetch } from "@/provider/RefetchContext";
 import { UseQueryResult } from "@tanstack/react-query";
 import { deleteTypess } from "@/app/actions/mainaction";
 import TeamsForm from "@/app/components/form/teams-form";
+import { deleteData } from "@/utils/utilts";
 
 // This type is used to define the shape of our data.
 // You can use a Zod schema here if you want.
@@ -49,8 +50,13 @@ export const columns = (
       const [data, setData] = useState<Teams | null>(null);
 
       const handleDelete = (id: string) => {
-        deleteTypess(id);
-        queryallteams.refetch();
+        // deleteTypess(id);
+        deleteData(`/api/teams/${id}`).then((res) => {
+          if (res.success) {
+            queryallteams.refetch();
+          }
+        });
+        // queryallteams.refetch();
       };
 
       return (

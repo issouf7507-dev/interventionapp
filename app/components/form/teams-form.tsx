@@ -162,7 +162,7 @@ const TeamsForm = ({
                 >
                   <FormControl>
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Sélectionner des employés" />
+                      <SelectValue placeholder="Sélectionner des Techniciens" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>

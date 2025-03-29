@@ -85,16 +85,28 @@ model Employee {
   team   EmployeeInTeam[]
 }
 
+// model EmployeeIntervention {
+//   id            String      @id @default(cuid())
+//   interventionId String?
+//   employeeId    String?
+//   assignedAt    DateTime    @default(now()) // Date d'affectation
+
+//   intervention  Intervention? @relation(fields: [interventionId], references: [id], onDelete: Cascade)
+//   employee      Employee?     @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+//   // @@unique([interventionId, employeeId]) // Empêche un employé d'être affecté plusieurs fois à la même intervention
+// }
+
 model EmployeeIntervention {
   id            String      @id @default(cuid())
-  interventionId String
-  employeeId    String
-  assignedAt    DateTime    @default(now()) // Date d'affectation
+  interventionId String     // Rendue obligatoire
+  employeeId    String      // Rendue obligatoire
+  assignedAt    DateTime    @default(now())
 
   intervention  Intervention @relation(fields: [interventionId], references: [id], onDelete: Cascade)
   employee      Employee     @relation(fields: [employeeId], references: [id], onDelete: Cascade)
 
-  @@unique([interventionId, employeeId]) // Empêche un employé d’être affecté plusieurs fois à la même intervention
+  @@unique([interventionId, employeeId])
 }
 
 model Client {
@@ -124,17 +136,18 @@ model Team {
     description   String?
     createdAt     DateTime @default(now())
     updatedAt     DateTime @updatedAt
-    employees   EmployeeInTeam[]
+    employees     EmployeeInTeam[]
+    interventions Intervention[]
 }
 
 model EmployeeInTeam {
   id            String   @id @default(cuid())
-  idEmployee   String
-  employee    Employee @relation(fields: [idEmployee], references: [id], onDelete: Cascade)
+  idEmployee   String? 
+  employee    Employee? @relation(fields: [idEmployee], references: [id], onDelete: Cascade)
   idTeam String
   team Team @relation(fields: [idTeam], references: [id], onDelete: Cascade)
-  interventionId String?
-intervention    Intervention? @relation(fields: [interventionId], references: [id], onDelete: Cascade)
+  // interventionId String?
+// intervention    Intervention? @relation(fields: [interventionId], references: [id], onDelete: Cascade)
 }
 
 model InterventionMaterial {
@@ -174,7 +187,14 @@ model Intervention {
   id          String     @id @default(cuid())
   title       String
   description String
+  conclusion String?
   location    String
+  latitude    Float?
+  longitude   Float?
+  placeId     String?
+  postalCode  String?
+  region      String?
+  country     String?
   startDate   DateTime
   endDate     DateTime
   status      String     @default("PENDING") // PENDING, IN_PROGRESS, COMPLETED, CANCELLED
@@ -182,12 +202,18 @@ model Intervention {
   updatedAt   DateTime   @updatedAt
   clientId    String
   interventionTypeId String
+  selectionType String
   client      Client     @relation(fields: [clientId], references: [id], onDelete: Cascade)
   interventionType  InterventionType     @relation(fields: [interventionTypeId], references: [id])
+
+
+
   employees   EmployeeIntervention[]
   materials   InterventionMaterial[]
   states   InterventionState[]
-  employeeinteam   EmployeeInTeam[]
+  teamlId String?
+  team       Team?     @relation(fields: [teamlId], references: [id], onDelete: Cascade)
+  // employeeinteam   EmployeeInTeam[]
 
   
 }

@@ -1,5 +1,5 @@
 "use client";
-import { getAllEmployees } from "@/app/actions/employeaction";
+
 import CustomDialog from "@/app/components/_comp/CustomDialog";
 import TeamsForm from "@/app/components/form/teams-form";
 import Header from "@/app/components/header";
@@ -19,9 +19,11 @@ const Page = () => {
   });
 
   const queryallteams = useQuery({
-    queryKey: ["allclinets"],
+    queryKey: ["allteams"],
     queryFn: () => fetchData("/api/teams"),
   });
+
+  console.log(queryallteams.data);
 
   // console.log(queryallteams?.data);
 

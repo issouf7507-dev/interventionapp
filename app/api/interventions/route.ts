@@ -8,95 +8,150 @@ export async function POST(req: Request) {
       title,
       description,
       location,
+      latitude,
+      longitude,
+      placeId,
+      postalCode,
+      region,
+      country,
+      formattedAddress,
       startDate,
       endDate,
+      selectionType,
       clientId,
       interventionTypeId,
-      employeeIds,
+      conclusion,
+      teamId,
+      employeeIds = [],
       materials,
     } = body;
 
-    if (!employeeIds || employeeIds.length === 0) {
+    // Validation des inputs
+    if (
+      selectionType === "employees" &&
+      (!employeeIds || employeeIds.length === 0)
+    ) {
       return NextResponse.json({
         success: false,
         message: "Au moins un employé doit être sélectionné",
       });
     }
 
+    if (selectionType === "teams" && !teamId) {
+      return NextResponse.json({
+        success: false,
+        message: "Une équipe doit être sélectionnée",
+      });
+    }
+
     if (!materials || materials.length === 0) {
       return NextResponse.json({
         success: false,
-        message: "Au moins un material doit être sélectionné",
+        message: "Au moins un matériel doit être sélectionné",
       });
     }
 
-    const listemployee = await prisma.employee.findMany({
-      where: {
-        id: {
-          in: employeeIds,
-        },
-      },
-    });
-
-    if (listemployee.length != employeeIds.length) {
-      return NextResponse.json({
-        success: false,
-        message: "Un ou plusieurs employés sélectionnés n'existent pas",
+    // Vérification des existances
+    if (employeeIds.length > 0) {
+      const listemployee = await prisma.employee.findMany({
+        where: { id: { in: employeeIds } },
       });
+      if (listemployee.length !== employeeIds.length) {
+        return NextResponse.json({
+          success: false,
+          message: "Un ou plusieurs employés sélectionnés n'existent pas",
+        });
+      }
+    }
+
+    if (selectionType === "teams" && teamId) {
+      const team = await prisma.team.findUnique({
+        where: { id: teamId },
+        include: { employees: true },
+      });
+
+      if (!team) {
+        return NextResponse.json({
+          success: false,
+          message: "L'équipe sélectionnée n'existe pas",
+        });
+      }
     }
 
     const listmateriel = await prisma.material.findMany({
-      where: {
-        id: {
-          in: materials,
-        },
-      },
+      where: { id: { in: materials } },
     });
-
-    if (listmateriel.length != materials.length) {
+    if (listmateriel.length !== materials.length) {
       return NextResponse.json({
         success: false,
-        message: "Un ou plusieurs materials sélectionnés n'existent pas",
+        message: "Un ou plusieurs matériels sélectionnés n'existent pas",
       });
     }
 
+    // Création de base de l'intervention
+    const baseData: any = {
+      title,
+      description,
+      location,
+      startDate,
+      endDate,
+      selectionType,
+      clientId,
+      interventionTypeId,
+      conclusion,
+      materials: {
+        create: materials.map((material: string) => ({
+          material: { connect: { id: material } },
+        })),
+      },
+    };
+
+    // Ajouter les coordonnées si disponibles
+    if (latitude && longitude) {
+      baseData.latitude = latitude;
+      baseData.longitude = longitude;
+      baseData.placeId = placeId;
+      baseData.postalCode = postalCode;
+      baseData.region = region;
+      baseData.country = country;
+    }
+
+    // if (formattedAddress) {
+    //   baseData.formattedAddress = formattedAddress;
+    // }
+
+    // Ajout des employés si sélectionnés
+    if (selectionType === "employees" && employeeIds.length > 0) {
+      baseData.employees = {
+        create: employeeIds.map((employeeId: string) => ({
+          employee: { connect: { id: employeeId } },
+        })),
+      };
+    }
+
+    // Créer l'intervention
     const intervention = await prisma.intervention.create({
-      data: {
-        title,
-        description,
-        location,
-        startDate,
-        endDate,
-        clientId,
-        interventionTypeId,
-        employees: {
-          create: employeeIds.map((employeeId: string) => ({
-            employee: {
-              connect: { id: employeeId },
-            },
-          })),
-        },
-        materials: {
-          create: materials.map((material: string) => ({
-            material: {
-              connect: { id: material },
-            },
-          })),
-        },
-      },
+      data: baseData,
     });
 
-    if (!intervention) {
-      return NextResponse.json({
-        success: false,
-        message:
-          "Une erreur s'est produite lors de la création de l'intervention",
-      });
-    }
+    // Si l'équipe est sélectionnée, associer les membres de l'équipe à l'intervention
+    // if (selectionType === "teams" && teamId) {
+    //   const teamMembers = await prisma.employeeInTeam.findMany({
+    //     where: { idTeam: teamId },
+    //   });
+
+    //   // Mettre à jour les membres d'équipe pour les associer à l'intervention
+    //   for (const member of teamMembers) {
+    //     await prisma.employeeInTeam.update({
+    //       where: { id: member.id },
+    //       data: { interventionId: intervention.id },
+    //     });
+    //   }
+    // }
 
     return NextResponse.json({
       success: true,
-      message: "Équipe créée avec succès",
+      message: "Intervention créée avec succès",
       intervention,
     });
   } catch (err) {
@@ -104,7 +159,8 @@ export async function POST(req: Request) {
     return NextResponse.json(
       {
         success: false,
-        message: "Une erreur est survenue lors de la création de l'équipe",
+        message:
+          "Une erreur est survenue lors de la création de l'intervention",
       },
       { status: 500 }
     );
@@ -126,7 +182,11 @@ export async function GET(res: Request) {
             material: true,
           },
         },
-
+        team: {
+          include: {
+            employees: true,
+          },
+        },
         states: {
           include: {
             photos: true,

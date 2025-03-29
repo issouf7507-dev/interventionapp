@@ -22,19 +22,13 @@ import {
 import { Loader2 } from "lucide-react";
 import { uploadInterventionImages } from "../actions/interventionaction";
 import { UseQueryResult } from "@tanstack/react-query";
+import { putData } from "@/utils/utilts";
+import { useEdgeStore } from "../lib/s";
+import { FileState, MultiImageDropzone } from "./_comp/MultiImageDropzone";
+
 // import { uploadInterventionImages } from "@/app/actions/interventionaction";
 
 // Type pour le résultat de uploadInterventionImages
-type UploadInterventionResult = {
-  success: boolean;
-  message?: string;
-  error?: any;
-  interventionState?: any;
-  intervention?: any;
-  uploadedImagesCount?: number;
-  totalImagesAttempted?: number;
-  uploadErrors?: string[];
-};
 
 // Composant toast simple
 type ToastProps = {
@@ -43,31 +37,11 @@ type ToastProps = {
   variant?: "default" | "destructive";
 };
 
-const useToast = () => {
-  const [toasts, setToasts] = useState<ToastProps[]>([]);
-
-  const toast = ({ title, description, variant = "default" }: ToastProps) => {
-    // Dans une implémentation réelle, vous afficheriez le toast à l'écran
-    console.log(`Toast: ${variant} - ${title}: ${description}`);
-    const newToast = { title, description, variant };
-    setToasts([...toasts, newToast]);
-
-    // Simuler la disparition du toast après 3 secondes
-    setTimeout(() => {
-      setToasts((currentToasts) => currentToasts.filter((t) => t !== newToast));
-    }, 3000);
-
-    // Ici, vous pourriez utiliser une bibliothèque comme react-hot-toast ou
-    // avoir votre propre implémentation de toast
-  };
-
-  return { toast, toasts };
-};
-
 const updateStateSchema = z.object({
   interventionId: z.string(),
   type: z.enum(["BEFORE", "AFTER"]),
   description: z.string().min(1, "La description est requise"),
+  conclusion: z.string().optional(),
 });
 
 type UpdateStateFormValues = z.infer<typeof updateStateSchema>;
@@ -83,11 +57,11 @@ export function EtatIntervention({
   setOpenUpdate: (openUpdate: boolean) => void;
   queryAllInterventions: UseQueryResult<any, Error>;
 }) {
-  const { toast } = useToast();
   const [stateType, setStateType] = useState<"BEFORE" | "AFTER">("BEFORE");
-  const [images, setImages] = useState<File[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const MAX_IMAGES = 10; // Limite maximum d'images
+  const { edgestore } = useEdgeStore();
+  const [fileStates, setFileStates] = useState<FileState[]>([]);
+  const urls: string[] = [];
 
   const form = useForm<UpdateStateFormValues>({
     resolver: zodResolver(updateStateSchema),
@@ -95,118 +69,60 @@ export function EtatIntervention({
       interventionId: intervention.id,
       type: "BEFORE",
       description: "",
+      conclusion: "",
     },
   });
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      const newFiles = Array.from(e.target.files);
-
-      // Vérifier si on dépasse la limite d'images
-      if (images.length + newFiles.length > MAX_IMAGES) {
-        toast({
-          title: "Limite d'images atteinte",
-          description: `Vous ne pouvez pas ajouter plus de ${MAX_IMAGES} images`,
-          variant: "destructive",
-        });
-        // On ajoute uniquement les images jusqu'à la limite
-        const remainingSlots = MAX_IMAGES - images.length;
-        if (remainingSlots > 0) {
-          setImages((prev) => [...prev, ...newFiles.slice(0, remainingSlots)]);
-        }
-        return;
-      }
-
-      setImages((prev) => [...prev, ...newFiles]);
-    }
-  };
-
-  const removeImage = (index: number) => {
-    setImages((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  const onSubmit = async (data: UpdateStateFormValues) => {
-    setIsSubmitting(true);
-
-    try {
-      // Créer un FormData pour envoyer les images
-      const formData = new FormData();
-      formData.append("interventionId", data.interventionId);
-      formData.append("type", data.type);
-      formData.append("description", data.description);
-
-      // Ajouter les images au FormData
-      images.forEach((image, index) => {
-        formData.append(`image-${index}`, image);
-      });
-
-      // Convertir les entrées en tableau pour éviter l'erreur d'itération
-      const entries = Array.from(formData.entries());
-      for (const pair of entries) {
-        console.log(pair);
-      }
-
-      // Appeler la fonction du serveur et typer le résultat
-      const result = (await uploadInterventionImages(
-        formData
-      )) as UploadInterventionResult;
-
-      if (result.success) {
-        toast({
-          title: "État mis à jour",
-          description:
-            data.type === "BEFORE"
-              ? "L'intervention a été mise à jour et passée en cours"
-              : "L'intervention a été complétée avec succès",
-        });
-
-        // Afficher un résumé des uploads d'images s'il y en a
-        if (result.uploadedImagesCount && result.uploadedImagesCount > 0) {
-          toast({
-            title: "Images téléchargées",
-            description: `${result.uploadedImagesCount} sur ${result.totalImagesAttempted} images ont été téléchargées avec succès.`,
-          });
-        }
-
-        // Afficher les erreurs d'upload s'il y en a
-        if (result.uploadErrors && result.uploadErrors.length > 0) {
-          toast({
-            title: "Erreurs d'upload",
-            description: `Certaines images n'ont pas pu être téléchargées. Vérifiez le format et la taille.`,
-            variant: "destructive",
-          });
-        }
-
-        // Réinitialiser le formulaire et les images
-        form.reset();
-        setImages([]);
-
-        // Dans une application réelle, vous pourriez rafraîchir les données ou rediriger l'utilisateur
-      } else {
-        toast({
-          title: "Erreur",
-          description:
-            result.message || "Une erreur est survenue lors de la mise à jour",
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
-      console.error(error);
-      toast({
-        title: "Erreur",
-        description: "Une erreur est survenue lors de la mise à jour",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
-      setOpenUpdate(false);
-      queryAllInterventions.refetch();
-      // set
-    }
-  };
+  const onSubmit = async (data: UpdateStateFormValues) => {};
 
   return (
     <div className="space-y-6">
+      {/* <MultiImageDropzone
+        value={fileStates}
+        dropzoneOptions={{
+          maxFiles: 6,
+        }}
+        onChange={(files) => {
+          setFileStates(files);
+        }}
+        // className="w-20"
+        onFilesAdded={async (addedFiles) => {
+          setFileStates([...fileStates, ...addedFiles]);
+          
+      
+        }}
+      />
+
+      <button
+        onClick={async () => {
+          await Promise.all(
+            fileStates.map(async (addedFileState) => {
+              try {
+                const res = await edgestore.publicFiles.upload({
+                  file: addedFileState.file,
+                  onProgressChange: async (progress: any) => {
+                    updateFileProgress(addedFileState.key, progress);
+                    if (progress === 100) {
+                      // wait 1 second to set it to complete
+                      // so that the user can see the progress bar at 100%
+                      await new Promise((resolve) => setTimeout(resolve, 1000));
+                      updateFileProgress(addedFileState.key, "COMPLETE");
+                    }
+                  },
+                });
+                // console.log(res);
+                urls.push(res?.url);
+                console.log(urls);
+              } catch (err) {
+                updateFileProgress(addedFileState.key, "ERROR");
+              }
+            })
+          );
+        }}
+      >
+        Upload
+      </button> */}
+
       <RadioGroup
         defaultValue="BEFORE"
         className="grid grid-cols-2 gap-4"
@@ -297,65 +213,44 @@ export function EtatIntervention({
           />
 
           {/* Téléchargement d'images */}
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <Label htmlFor="images">
-                Photos {stateType === "BEFORE" ? "avant" : "après"} intervention
-              </Label>
-              <span className="text-sm text-muted-foreground">
-                {images.length} / {MAX_IMAGES} images
-              </span>
-            </div>
+          <MultiImageDropzone
+            value={fileStates}
+            dropzoneOptions={{
+              maxFiles: 6,
+            }}
+            onChange={(files) => {
+              setFileStates(files);
+            }}
+            // className="w-20"
+            onFilesAdded={async (addedFiles) => {
+              setFileStates([...fileStates, ...addedFiles]);
+            }}
+          />
 
-            <div className="flex flex-col space-y-2">
-              <Input
-                id="images"
-                type="file"
-                accept="image/*"
-                multiple
-                onChange={handleImageUpload}
-                className="cursor-pointer"
-                disabled={images.length >= MAX_IMAGES}
-              />
-              <p className="text-sm text-muted-foreground">
-                Sélectionnez jusqu'à {MAX_IMAGES} images pour documenter l'état{" "}
-                {stateType === "BEFORE" ? "avant" : "après"} l'intervention
-              </p>
-            </div>
-
-            {/* Aperçu des images */}
-            {images.length > 0 && (
-              <div>
-                <h4 className="text-sm font-medium mb-2">
-                  Aperçu des images ({images.length})
-                </h4>
-                <div className="grid grid-cols-3 gap-3 mt-2">
-                  {images.map((image, index) => (
-                    <div key={index} className="relative group">
-                      <img
-                        src={URL.createObjectURL(image)}
-                        alt={`Aperçu ${index}`}
-                        className="h-20 w-full object-cover rounded"
-                      />
-                      <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all rounded flex items-center justify-center">
-                        <button
-                          type="button"
-                          onClick={() => removeImage(index)}
-                          className="opacity-0 group-hover:opacity-100 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center transition-opacity"
-                          aria-label="Supprimer l'image"
-                        >
-                          ×
-                        </button>
-                      </div>
-                      <span className="absolute bottom-1 left-1 text-xs bg-black bg-opacity-50 text-white px-1 rounded">
-                        {(image.size / 1024).toFixed(0)} KB
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
+          <FormField
+            control={form.control}
+            name="conclusion"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>
+                  Conclusion {stateType === "BEFORE" ? "avant" : "après"}{" "}
+                  intervention
+                </FormLabel>
+                <FormControl>
+                  <Textarea
+                    {...field}
+                    placeholder={
+                      stateType === "BEFORE"
+                        ? "Décrivez l'état initial avant l'intervention..."
+                        : "Décrivez les actions effectuées et l'état final..."
+                    }
+                    className="h-24"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
             )}
-          </div>
+          />
 
           {/* Bouton de soumission */}
           <Button type="submit" className="w-full" disabled={isSubmitting}>

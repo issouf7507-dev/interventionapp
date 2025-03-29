@@ -36,8 +36,12 @@ import { Employes } from "../(dashbord)/(routes)/employes/table/columns";
 import { Materials } from "../(dashbord)/(routes)/materials/table/columns";
 import { createIntervention } from "../actions/interventionaction";
 import { ScrollArea, ScrollBar } from "./ui/scroll-area";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { postData } from "@/utils/utilts";
+import { Teams } from "../(dashbord)/(routes)/teams/table/columns";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { MapboxLocationData } from "../components/form/mailbox";
+import LocationAutocomplete from "../components/form/mailbox";
 
 const interventionFormSchema = z.object({
   title: z.string().min(1, "Le titre est requis"),
@@ -50,10 +54,34 @@ const interventionFormSchema = z.object({
     required_error: "La date de fin est requise",
   }),
   clientId: z.string().min(1, "Le client est requis"),
+  teamId: z.string().optional(),
   interventionTypeId: z.string().min(1, "Le type d'intervention est requis"),
-  employeeIds: z.array(z.string()).min(1, "Au moins un employé est requis"),
+  selectionType: z.enum(["employees", "teams"]).default("employees"),
+  employeeIds: z.array(z.string()).optional(),
   materials: z.array(z.string()).min(1, "Au moins un matériel est requis"),
+  conclusion: z.string().optional(),
+
+  // Champs de géolocalisation
+  latitude: z.number().nullable().optional(),
+  longitude: z.number().nullable().optional(),
+  formattedAddress: z.string().nullable().optional(),
+  placeId: z.string().nullable().optional(),
+  postalCode: z.string().nullable().optional(),
+  region: z.string().nullable().optional(),
+  country: z.string().nullable().optional(),
 });
+// .refine(
+//   (data) => {
+//     if (data.selectionType === "employees") {
+//       return data.employeeIds && data.employeeIds.length > 0;
+//     }
+//     return data.teams && data.teams.length > 0;
+//   },
+//   {
+//     message: "Vous devez sélectionner au moins un employé ou une équipe",
+//     path: ["selectionType"],
+//   }
+// );
 
 type InterventionFormValues = z.infer<typeof interventionFormSchema>;
 
@@ -63,9 +91,20 @@ interface InterventionFormProps {
   employees: UseQueryResult<any, Error>;
   materials: UseQueryResult<any, Error>;
   queryallinterventions: UseQueryResult<any, Error>;
+  queryallteams: UseQueryResult<any, Error>;
 
   openD: boolean;
   setOpenD: (openD: boolean) => void;
+  locationData?: {
+    location?: string;
+    latitude?: number | null;
+    longitude?: number | null;
+    formattedAddress?: string | null;
+    placeId?: string;
+    postalCode?: string;
+    region?: string;
+    country?: string;
+  } | null;
 }
 
 export function InterventionForm({
@@ -76,18 +115,33 @@ export function InterventionForm({
   queryallinterventions,
   openD,
   setOpenD,
+  queryallteams,
+  locationData,
 }: InterventionFormProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const [errorUnique, setErrorUnique] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const form = useForm<InterventionFormValues>({
     resolver: zodResolver(interventionFormSchema),
     defaultValues: {
       title: "",
       description: "",
       location: "",
+      selectionType: "employees",
       employeeIds: [],
       materials: [],
     },
   });
+
+  const selectionType = form.watch("selectionType");
+
+  // useEffect(() => {
+  //   if (selectionType === "employees") {
+  //     form.setValue("teams", []);
+  //   } else {
+  //     form.setValue("employeeIds", []);
+  //   }
+  // }, [selectionType, form]);
 
   function handleDateSelect(date: Date | undefined) {
     if (date) {
@@ -130,18 +184,25 @@ export function InterventionForm({
   }
 
   async function onSubmit(data: InterventionFormValues) {
-    setIsLoading(true);
-    // createIntervention(data)
-    postData(data, "/api/interventions").then((res) => {
-      queryallinterventions?.refetch();
-      form.reset();
-      setOpenD(false);
-      setIsLoading(false);
-    });
-    // console.log(queryallinterventions);
-  }
+    // setIsLoading(true);
+    const submissionData = {
+      ...data,
+      employeeIds: data.selectionType === "employees" ? data.employeeIds : [],
+    };
+    console.log(submissionData);
 
-  // console.log(employeeQuery.data?.employee);
+    postData(submissionData, "/api/interventions").then((res) => {
+      if (res.success) {
+        queryallinterventions?.refetch();
+        form.reset();
+        setOpenD(false);
+        setIsLoading(false);
+      } else {
+        setErrorUnique(res.message);
+        setIsLoading(false);
+      }
+    });
+  }
 
   return (
     <Form {...form}>
@@ -184,7 +245,29 @@ export function InterventionForm({
             <FormItem>
               <FormLabel>Emplacement</FormLabel>
               <FormControl>
-                <Input placeholder="Emplacement" {...field} />
+                <div className="relative">
+                  <LocationAutocomplete
+                    initialValue={field.value}
+                    onSelect={(locationData: MapboxLocationData) => {
+                      // Mettre à jour le champ emplacement
+                      field.onChange(locationData.location);
+
+                      // Mettre à jour les champs de géolocalisation cachés
+                      form.setValue("latitude", locationData.latitude);
+                      ``;
+                      form.setValue("longitude", locationData.longitude);
+                      form.setValue("formattedAddress", locationData.location);
+                      form.setValue("placeId", locationData.placeId || null);
+                      form.setValue("country", locationData.location);
+                      form.setValue(
+                        "postalCode",
+                        locationData.postalCode || null
+                      );
+                      form.setValue("region", locationData.region || null);
+                      form.setValue("country", locationData.country || null);
+                    }}
+                  />
+                </div>
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -390,9 +473,7 @@ export function InterventionForm({
                     </div>
                   </PopoverContent>
                 </Popover>
-                {/* <FormDescription>
-                 Please select your preferred date and time.
-               </FormDescription> */}
+
                 <FormMessage />
               </FormItem>
             )}
@@ -459,65 +540,139 @@ export function InterventionForm({
 
         <FormField
           control={form.control}
-          name="employeeIds"
+          name="selectionType"
           render={({ field }) => (
-            <FormItem>
-              <FormLabel>Techniciens</FormLabel>
-              <Select
-                onValueChange={(value) => {
-                  const currentValues = field.value || [];
-                  const newValues = currentValues.includes(value)
-                    ? currentValues.filter((v) => v !== value)
-                    : [...currentValues, value];
-                  field.onChange(newValues);
-                }}
-              >
-                <FormControl>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Sélectionner des employés" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {employeeQuery.data?.data?.map((employee: Employes) => (
-                    <SelectItem key={employee.id} value={employee.id}>
-                      {`${employee.firstName} ${employee.lastName}`}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <div className="mt-2">
-                {field.value?.map((employeeId) => {
-                  const employee = employeeQuery.data?.data?.find(
-                    (e: any) => e.id === employeeId
-                  );
-                  return (
-                    <div
-                      key={employeeId}
-                      className="inline-flex items-center bg-secondary text-secondary-foreground px-2 py-1 rounded-md mr-2 mb-2"
+            <FormItem className="space-y-3">
+              <FormLabel>Type d'assignation</FormLabel>
+              <FormControl>
+                <RadioGroup
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                  className="flex flex-col space-y-1"
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="employees" id="employees" />
+                    <label
+                      htmlFor="employees"
+                      className="font-normal cursor-pointer"
                     >
-                      {employee
-                        ? `${employee.firstName} ${employee.lastName}`
-                        : employeeId}
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        className="h-4 w-4 p-0 ml-2"
-                        onClick={() => {
-                          field.onChange(
-                            field.value?.filter((id) => id !== employeeId)
-                          );
-                        }}
-                      >
-                        ×
-                      </Button>
-                    </div>
-                  );
-                })}
-              </div>
+                      Assigner des techniciens individuels
+                    </label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="teams" id="teams" />
+                    <label
+                      htmlFor="teams"
+                      className="font-normal cursor-pointer"
+                    >
+                      Assigner des équipes complètes
+                    </label>
+                  </div>
+                </RadioGroup>
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
+
+        {selectionType === "employees" && (
+          <FormField
+            control={form.control}
+            name="employeeIds"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Techniciens</FormLabel>
+                <Select
+                  onValueChange={(value) => {
+                    const currentValues = field.value || [];
+                    const newValues = currentValues.includes(value)
+                      ? currentValues.filter((v) => v !== value)
+                      : [...currentValues, value];
+                    field.onChange(newValues);
+                  }}
+                >
+                  <FormControl>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Sélectionner des techniciens" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {employeeQuery.data?.data?.map((employee: Employes) => (
+                      <SelectItem key={employee.id} value={employee.id}>
+                        {`${employee.firstName} ${employee.lastName}`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <div className="mt-2">
+                  {field.value?.map((employeeId) => {
+                    const employee = employeeQuery.data?.data?.find(
+                      (e: any) => e.id === employeeId
+                    );
+                    return (
+                      <div
+                        key={employeeId}
+                        className="inline-flex items-center bg-secondary text-secondary-foreground px-2 py-1 rounded-md mr-2 mb-2"
+                      >
+                        {employee
+                          ? `${employee.firstName} ${employee.lastName}`
+                          : employeeId}
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          className="h-4 w-4 p-0 ml-2"
+                          onClick={() => {
+                            field.onChange(
+                              field.value?.filter((id) => id !== employeeId)
+                            );
+                          }}
+                        >
+                          ×
+                        </Button>
+                      </div>
+                    );
+                  })}
+                </div>
+                {form.formState.errors.employeeIds && (
+                  <p className="text-sm text-red-500">
+                    Vous devez sélectionner au moins un technicien
+                  </p>
+                )}
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
+
+        {selectionType === "teams" && (
+          <FormField
+            control={form.control}
+            name="teamId"
+            render={({ field }) => (
+              <FormItem className="w-full flex flex-col">
+                <FormLabel>Equipe</FormLabel>
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                >
+                  <FormControl>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Sélectionner un client" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {queryallteams.data?.data?.map((team: any) => (
+                      <SelectItem key={team.id} value={team.id}>
+                        {team.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
 
         <FormField
           control={form.control}
@@ -566,7 +721,6 @@ export function InterventionForm({
                           field.onChange(
                             field.value?.filter((id) => id !== materielId)
                           );
-                          // Si plus aucun employé sélectionné, on reset le Select
                         }}
                       >
                         ×
@@ -579,6 +733,9 @@ export function InterventionForm({
             </FormItem>
           )}
         />
+
+        {error && <p className="text-sm text-red-500">{error}</p>}
+        {errorUnique && <p className="text-sm text-red-500">{errorUnique}</p>}
 
         <Button type="submit" className="w-full" disabled={isLoading}>
           {isLoading ? "Traitement en cours..." : "Créer l'intervention"}
