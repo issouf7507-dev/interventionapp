@@ -8,22 +8,24 @@ export async function PUT(
   try {
     const body = await req.json();
     const { name, description, employeeIds } = body;
+
     const slug = (await params).id;
+    // console.log(body);
 
-    const employeesExist = await prisma.employee.findMany({
-      where: {
-        id: { in: employeeIds }, // Assure-toi que `employeeIds` contient les bons IDs
-      },
-    });
+    // const employeesExist = await prisma.employee.findMany({
+    //   where: {
+    //     id: { in: employeeIds }, // Assure-toi que `employeeIds` contient les bons IDs
+    //   },
+    // });
 
-    if (employeesExist) {
-      // console.log(employeesExist);
+    // if (employeesExist) {
+    //   console.log(employeesExist);
 
-      return NextResponse.json({
-        success: false,
-        message: "Le nom doit être unique. Ce nom existe déjà.",
-      });
-    }
+    //   return NextResponse.json({
+    //     success: false,
+    //     message: "Le nom doit être unique. Ce nom existe déjà.",
+    //   });
+    // }
 
     const updatedTeam = await prisma.team.update({
       where: {
@@ -32,7 +34,6 @@ export async function PUT(
       data: {
         name,
         description,
-
         employees: {
           connect: employeeIds.map((id: string) => ({ id })), // Connecter les employés par leurs IDs
         },

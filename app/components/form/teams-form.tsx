@@ -55,7 +55,7 @@ const TeamsForm = ({
     resolver: zodResolver(teamsSchema),
   });
 
-  console.log(initialData);
+  // console.log(initialData);
 
   async function onSubmitModify(data: TeamsFormValues) {
     setIsLoading(true);
@@ -64,6 +64,8 @@ const TeamsForm = ({
     putData(data, `/api/teams/${initialData.id}`).then((res) => {
       if (res.success) {
         queryteams?.refetch();
+        console.log(res);
+
         setOpenD(false);
         form.reset();
         setIsLoading(false);
@@ -212,7 +214,12 @@ const TeamsForm = ({
           />
 
           <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? "Traitement en cours..." : "Créer l'intervention"}
+            {isLoading
+              ? "Traitement en cours..."
+              : initialData
+              ? "Modifier"
+              : "Ajouter"}
+            {/* {isLoading ? "Traitement en cours..." : "Créer l'intervention"} */}
           </Button>
         </form>
       </Form>

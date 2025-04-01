@@ -1,18 +1,15 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import {
+  generateEmployeeCredentials,
+  hashPassword,
+} from "@/app/utils/employee-utils";
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const {
-      firstName,
-      lastName,
-      email,
-      phoneNumber,
-      address,
-      employeeTypeId,
-      // userId,
-    } = body;
+    const { firstName, lastName, email, phoneNumber, address, employeeTypeId } =
+      body;
 
     const existingMail = await prisma.employee.findUnique({
       where: { email },
@@ -36,6 +33,13 @@ export async function POST(req: Request) {
       });
     }
 
+    // Générer les identifiants
+    const { username, password } = generateEmployeeCredentials(
+      firstName,
+      lastName
+    );
+    const hashedPassword = await hashPassword(password);
+
     const employee = await prisma.employee.create({
       data: {
         firstName,
@@ -44,14 +48,19 @@ export async function POST(req: Request) {
         phoneNumber,
         address,
         employeeTypeId,
-        // userId,
+        username,
+        password: hashedPassword,
+        passwordNotHashed: password,
       },
     });
 
     return NextResponse.json({
       success: true,
       message: "Technicien créé avec succès",
-      data: employee,
+      data: {
+        ...employee,
+        password, // On renvoie le mot de passe en clair une seule fois
+      },
     });
   } catch (err) {
     console.error(err);

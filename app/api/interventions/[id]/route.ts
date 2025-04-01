@@ -3,72 +3,106 @@ import prisma from "@/lib/prisma";
 
 export async function PUT(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    // const id = params.id;
+    const body = await req.json();
+    const {
+      // interventionId,
+      type,
+      description,
+      state,
+      conclusion,
+    } = body;
 
-    // Vérifier si l'intervention existe
-    // const intervention = await prisma.intervention.findUnique({
-    //   where: { id },
-    // });
+    const interventionId = (await params).id;
 
-    // if (!intervention) {
-    //   return NextResponse.json(
-    //     { success: false, message: "Intervention non trouvée" },
-    //     { status: 404 }
-    //   );
-    // }
+    const intervention = await prisma.intervention.findUnique({
+      where: {
+        id: interventionId,
+      },
+    });
 
-    // Déterminer le type de contenu et extraire les données en conséquence
-    let data: Record<string, any> = {};
-    const contentType = req.headers.get("content-type") || "";
-
-    if (contentType.includes("application/json")) {
-      // Traiter les données JSON
-      data = await req.json();
-    } else if (
-      contentType.includes("multipart/form-data") ||
-      contentType.includes("application/x-www-form-urlencoded")
-    ) {
-      // Traiter les données de formulaire
-      const formData = await req.formData();
-      formData.forEach((value, key) => {
-        if (value instanceof File) {
-          console.log(`Fichier reçu: ${key}`, value);
-          // Traitement des fichiers si nécessaire
-        } else {
-          data[key] = value;
-        }
+    if (!intervention) {
+      return NextResponse.json({
+        success: false,
+        message: "cette intervention n exist pas ",
       });
-    } else {
-      // Type de contenu non pris en charge
-      return NextResponse.json(
-        {
-          success: false,
-          message:
-            "Content-Type non pris en charge. Utilisez application/json ou multipart/form-data.",
-        },
-        { status: 415 }
-      );
     }
 
-    // Mise à jour de l'intervention
-    // const updatedIntervention = await prisma.intervention.update({
-    //   where: { id },
-    //   data: {
-    //     // Mettre à jour uniquement les champs fournis
-    //     ...(data.title && { title: data.title }),
-    //     ...(data.description && { description: data.description }),
-    //     ...(data.location && { location: data.location }),
-    //     ...(data.status && { status: data.status }),
-    //     // Ajoutez d'autres champs selon les besoins
-    //   },
-    // });
+    const newStatus = type === "BEFORE" ? "IN_PROGRESS" : "COMPLETED";
+
+    const newStatus2 = type == "AFTER" ? "COMPLETED" : "CANCEL";
+
+    let interventionState;
+    let updatedIntervention;
+
+    if (newStatus === "IN_PROGRESS") {
+      interventionState = await prisma.interventionState.create({
+        data: {
+          type,
+          conclusion,
+          description,
+          interventionId,
+          // photos: {
+          //   create: state.map((url: string) => ({
+          //     photo: { connect: { id: url } },
+          //   })),
+          // },
+
+          photos: {
+            create: state.map((url: any) => ({
+              url,
+            })),
+          },
+        },
+      });
+
+      updatedIntervention = await prisma.intervention.update({
+        where: {
+          id: interventionId,
+        },
+        data: {
+          status: newStatus,
+        },
+      });
+    } else if (newStatus2 === "COMPLETED") {
+      interventionState = await prisma.interventionState.create({
+        data: {
+          type,
+          conclusion,
+          description,
+          interventionId,
+          // photos: {
+          //   create: state.map((url: string) => ({
+          //     photo: { connect: { id: url } },
+          //   })),
+          // },
+
+          photos: {
+            create: state.map((url: any) => ({
+              url,
+            })),
+          },
+        },
+      });
+
+      updatedIntervention = await prisma.intervention.update({
+        where: {
+          id: interventionId,
+        },
+        data: {
+          status: newStatus2,
+        },
+      });
+    }
 
     return NextResponse.json({
       success: true,
       message: "Intervention mise à jour avec succès",
+      updatedIntervention,
+      interventionState,
+
       // data: updatedIntervention,
     });
   } catch (err) {

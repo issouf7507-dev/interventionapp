@@ -142,11 +142,11 @@ const LocationAutocomplete = ({
         onChange={handleInputChange}
       />
       {suggestions.length > 0 && (
-        <ul className="absolute z-10 w-full bg-white border border-gray-300 rounded shadow-lg">
+        <ul className="absolute z-10 w-full bg-white border dark:bg-background border-gray-300 rounded shadow-lg">
           {suggestions.map((suggestion) => (
             <li
               key={suggestion.id}
-              className="p-2 hover:bg-gray-100 cursor-pointer text-black"
+              className="p-2 hover:bg-gray-100 dark:hover:bg-neutral-700 cursor-pointer text-black dark:text-white "
               onClick={() => handleSuggestionClick(suggestion)}
             >
               {suggestion.place_name}

@@ -1,6 +1,7 @@
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
+import GoogleProvider from "next-auth/providers/google";
 import { db } from "./db";
 import { compare } from "bcrypt";
 
@@ -24,6 +25,19 @@ export const authOptions: NextAuthOptions = {
     signIn: "/login",
   },
   providers: [
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      authorization: {
+        url: "https://accounts.google.com/o/oauth2/auth",
+        params: {
+          scope: "https://www.googleapis.com/auth/calendar",
+          access_type: "offline",
+          response_type: "code",
+          prompt: "consent",
+        },
+      },
+    }),
     CredentialsProvider({
       name: "Credentials",
       credentials: {

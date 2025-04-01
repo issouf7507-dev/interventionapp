@@ -42,6 +42,7 @@ const updateStateSchema = z.object({
   type: z.enum(["BEFORE", "AFTER"]),
   description: z.string().min(1, "La description est requise"),
   conclusion: z.string().optional(),
+  states: z.array(z.string()).optional(),
 });
 
 type UpdateStateFormValues = z.infer<typeof updateStateSchema>;
@@ -52,7 +53,8 @@ export function EtatIntervention({
   setOpenUpdate,
   queryAllInterventions,
 }: {
-  intervention: Intervention;
+  // intervention: Intervention;
+  intervention: any;
   openUpdate: boolean;
   setOpenUpdate: (openUpdate: boolean) => void;
   queryAllInterventions: UseQueryResult<any, Error>;
@@ -73,7 +75,66 @@ export function EtatIntervention({
     },
   });
 
-  const onSubmit = async (data: UpdateStateFormValues) => {};
+  function updateFileProgress(key: string, progress: FileState["progress"]) {
+    setFileStates((fileStates) => {
+      const newFileStates = structuredClone(fileStates);
+      const fileState = newFileStates.find(
+        (fileState) => fileState.key === key
+      );
+      if (fileState) {
+        fileState.progress = progress;
+      }
+      return newFileStates;
+    });
+  }
+
+  const onSubmit = async (data: UpdateStateFormValues) => {
+    await Promise.all(
+      fileStates.map(async (addedFileState) => {
+        try {
+          const res = await edgestore.publicFiles.upload({
+            file: addedFileState.file,
+            onProgressChange: async (progress: any) => {
+              updateFileProgress(addedFileState.key, progress);
+              if (progress === 100) {
+                // wait 1 second to set it to complete
+                // so that the user can see the progress bar at 100%
+                await new Promise((resolve) => setTimeout(resolve, 1000));
+                updateFileProgress(addedFileState.key, "COMPLETE");
+              }
+            },
+          });
+          // console.log(res);
+          urls.push(res?.url);
+          console.log(urls);
+        } catch (err) {
+          updateFileProgress(addedFileState.key, "ERROR");
+        }
+      })
+    );
+
+    if (stateType === "BEFORE" && urls.length > 0) {
+      const state = {
+        ...data,
+        state: urls,
+      };
+
+      // console.log(state);
+
+      await putData(state, `/api/interventions/${intervention.id}`);
+    }
+
+    if (stateType === "AFTER" && urls.length > 0) {
+      const state = {
+        ...data,
+        state: urls,
+      };
+
+      // console.log(state);
+
+      await putData(state, `/api/interventions/${intervention.id}`);
+    }
+  };
 
   return (
     <div className="space-y-6">

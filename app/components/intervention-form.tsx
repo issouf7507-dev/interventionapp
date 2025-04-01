@@ -34,14 +34,16 @@ import { Clients } from "../(dashbord)/(routes)/clients/table/columns";
 import { UseQueryResult } from "@tanstack/react-query";
 import { Employes } from "../(dashbord)/(routes)/employes/table/columns";
 import { Materials } from "../(dashbord)/(routes)/materials/table/columns";
-import { createIntervention } from "../actions/interventionaction";
+
 import { ScrollArea, ScrollBar } from "./ui/scroll-area";
 import { useState, useEffect } from "react";
 import { postData } from "@/utils/utilts";
-import { Teams } from "../(dashbord)/(routes)/teams/table/columns";
+
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { MapboxLocationData } from "../components/form/mailbox";
 import LocationAutocomplete from "../components/form/mailbox";
+import { addToGoogleCalendar } from "../lib/google";
+// import { addToGoogleCalendar } from "../lib/google";
 
 const interventionFormSchema = z.object({
   title: z.string().min(1, "Le titre est requis"),
@@ -183,13 +185,32 @@ export function InterventionForm({
     form.setValue("endDate", newDate);
   }
 
+  const handleSubmit = async (interventionData: any) => {
+    try {
+      const response = await fetch("/api/calendar", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ intervention: interventionData }),
+      });
+
+      if (!response.ok) throw new Error("Failed to create event");
+
+      const data = await response.json();
+      alert("Event created: " + data.htmlLink);
+    } catch (error) {
+      console.error(error);
+      alert("Error creating event");
+    }
+  };
   async function onSubmit(data: InterventionFormValues) {
     // setIsLoading(true);
     const submissionData = {
       ...data,
       employeeIds: data.selectionType === "employees" ? data.employeeIds : [],
     };
-    console.log(submissionData);
+    // console.log(submissionData);
 
     postData(submissionData, "/api/interventions").then((res) => {
       if (res.success) {
@@ -197,6 +218,9 @@ export function InterventionForm({
         form.reset();
         setOpenD(false);
         setIsLoading(false);
+        // addToGoogleCalendar(submissionData);
+        // addToGoogleCalendar(submissionData);
+        handleSubmit(submissionData);
       } else {
         setErrorUnique(res.message);
         setIsLoading(false);

@@ -72,13 +72,15 @@ model EmployeeType {
 
 model Employee {
   id                String        @id @default(cuid())
-  // userId            String       
   employeeTypeId    String
   firstName         String
   lastName          String
   email             String?       @unique
   phoneNumber       String?       @unique
   address           String?
+  username          String?       @unique
+  password          String?
+  passwordNotHashed String?
   // user              User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   employeeType      EmployeeType @relation(fields: [employeeTypeId], references: [id])
   interventions     EmployeeIntervention[]
@@ -171,6 +173,7 @@ model InterventionState {
   interventionId  String
   type            String          // "BEFORE" ou "AFTER"
   description     String?
+  conclusion      String?
   createdAt       DateTime        @default(now())
   intervention    Intervention    @relation(fields: [interventionId], references: [id], onDelete: Cascade)
   photos          InterventionPhoto[]
@@ -187,7 +190,7 @@ model Intervention {
   id          String     @id @default(cuid())
   title       String
   description String
-  conclusion String?
+  conclusion  String?
   location    String
   latitude    Float?
   longitude   Float?
@@ -213,7 +216,5 @@ model Intervention {
   states   InterventionState[]
   teamlId String?
   team       Team?     @relation(fields: [teamlId], references: [id], onDelete: Cascade)
-  // employeeinteam   EmployeeInTeam[]
-
-  
+  // employeeinteam   EmployeeInTeam[] 
 }

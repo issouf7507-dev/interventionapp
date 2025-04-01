@@ -24,13 +24,11 @@ import { useQuery } from "@tanstack/react-query";
 import { columns, Intervention } from "./table/columns";
 import { DataTable } from "./table/data-table";
 import { fetchData } from "@/utils/utilts";
-import AddressAutocomplete from "@/app/components/form/google";
+
 import { LocationData } from "@/app/components/form/google";
-import LocationAutocomplete from "@/app/components/form/mailbox";
 
 function Page() {
   const [openD, setOpenD] = useState(false);
-  const [locationData, setLocationData] = useState<LocationData | null>(null);
 
   const [activeTab, setActiveTab] = useState("Liste des interventions");
 
@@ -75,14 +73,14 @@ function Page() {
     queryFn: () => fetchData("/api/teams"),
   });
 
-  // console.log(queryallinterventions.data?.data);
+  console.log(queryallinterventions.data?.data);
 
   return (
     <div>
       <Header title="Interventions" />
       <div className="px-5 flex justify-between">
         <div>
-          <Button onClick={() => setOpenD(true)}>+</Button>
+          <Button onClick={() => setOpenD(true)}>Nouvelle Intervention</Button>
         </div>
 
         <div className="dark:bg-neutral-800 bg-gray-200 rounded-lg p-1">

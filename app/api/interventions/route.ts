@@ -14,7 +14,7 @@ export async function POST(req: Request) {
       postalCode,
       region,
       country,
-      formattedAddress,
+
       startDate,
       endDate,
       selectionType,
@@ -99,6 +99,7 @@ export async function POST(req: Request) {
       clientId,
       interventionTypeId,
       conclusion,
+      teamlId: teamId,
       materials: {
         create: materials.map((material: string) => ({
           material: { connect: { id: material } },

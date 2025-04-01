@@ -4,154 +4,6 @@ import { Resend } from "resend";
 
 const resend = new Resend("re_TJt7ztEr_5CDn8S9ahPTAZwruzABgX5VE");
 
-export async function createIntervention({
-  title,
-  description,
-  location,
-  startDate,
-  endDate,
-  clientId,
-  interventionTypeId,
-  employeeIds,
-  materials,
-}: {
-  title: string;
-  description: string;
-  location: string;
-  startDate: Date;
-  endDate: Date;
-  clientId: string;
-  interventionTypeId: string;
-  employeeIds: string[];
-  materials: string[];
-}) {
-  try {
-    // Vérifier que les données nécessaires sont présentes
-    if (
-      !title ||
-      !description ||
-      !location ||
-      !startDate ||
-      !endDate ||
-      !clientId ||
-      !interventionTypeId
-    ) {
-      return {
-        success: false,
-        message: "Tous les champs obligatoires doivent être remplis",
-      };
-    }
-
-    if (!employeeIds || employeeIds.length === 0) {
-      return {
-        success: false,
-        message: "Au moins un employé doit être sélectionné",
-      };
-    }
-
-    if (!materials || materials.length === 0) {
-      return {
-        success: false,
-        message: "Au moins un matériel doit être sélectionné",
-      };
-    }
-
-    const technicians = await prisma.employee.findMany({
-      where: {
-        id: {
-          in: employeeIds,
-        },
-      },
-    });
-
-    if (technicians.length !== employeeIds.length) {
-      return {
-        success: false,
-        message: "Un ou plusieurs employés sélectionnés n'existent pas",
-      };
-    }
-
-    // Créer l'intervention avec toutes ses relations
-    const intervention = await prisma.intervention.create({
-      data: {
-        title,
-        description,
-        location,
-        startDate,
-        endDate,
-        clientId,
-        interventionTypeId,
-
-        // Utiliser la table pivot EmployeeIntervention pour associer les employés
-        employees: {
-          create: employeeIds.map((employeeId) => ({
-            employee: {
-              connect: { id: employeeId },
-            },
-            // assignedAt est défini automatiquement avec @default(now())
-          })),
-        },
-
-        // Relation many-to-many via la table de jointure InterventionMaterial
-        materials: {
-          create: materials.map((materialId) => ({
-            material: {
-              connect: { id: materialId },
-            },
-            quantity: 1, // Quantité par défaut
-          })),
-        },
-      },
-      // Inclure les relations dans la réponse
-      include: {
-        client: true,
-        interventionType: true,
-        employees: {
-          include: {
-            employee: true,
-          },
-        },
-        materials: {
-          include: {
-            material: true,
-          },
-        },
-      },
-    });
-
-    if (!intervention) {
-      return {
-        success: false,
-        message:
-          "Une erreur s'est produite lors de la création de l'intervention",
-      };
-    }
-
-    // Envoi d'emails aux techniciens en utilisant une approche simplifiée
-    for (const technician of technicians) {
-      try {
-        resend.emails.send({
-          from: "entar225@gmail.com",
-          to: "ouattaraissouf7507@gmail.com",
-          subject: "Hello World",
-          html: "<p>Congrats on sending your <strong>first email</strong>!</p>",
-        });
-      } catch (emailError) {
-        console.error(
-          `Erreur lors de l'envoi de l'email au technicien ${technician.id}:`,
-          emailError
-        );
-        // On continue même si l'envoi d'email échoue
-      }
-    }
-
-    return { success: true, intervention };
-  } catch (error) {
-    console.error("Erreur lors de la création de l'intervention:", error);
-    return { success: false, message: "Une erreur s'est produite", error };
-  }
-}
-
 export async function getAllInterventions() {
   try {
     const interventions = await prisma.intervention.findMany({
@@ -206,11 +58,13 @@ export async function updateInterventionState({
   type,
   description,
   imageUrls = [],
+  conclusion,
 }: {
   interventionId: string;
   type: "BEFORE" | "AFTER";
   description: string;
   imageUrls?: string[];
+  conclusion: string;
 }) {
   try {
     // Vérifier que les données nécessaires sont présentes
@@ -249,6 +103,7 @@ export async function updateInterventionState({
           interventionId,
           type,
           description,
+          conclusion,
           photos: {
             create: imageUrls.map((url) => ({
               url,
@@ -351,6 +206,7 @@ export async function uploadInterventionImages(formData: FormData) {
     const interventionId = formData.get("interventionId") as string;
     const type = formData.get("type") as "BEFORE" | "AFTER";
     const description = formData.get("description") as string;
+    const conclusion = formData.get("conclusion") as string;
 
     // Validation des champs requis
     if (!interventionId || !type || !description) {
@@ -459,6 +315,7 @@ export async function uploadInterventionImages(formData: FormData) {
       type,
       description,
       imageUrls,
+      conclusion,
     });
 
     // Ajouter les erreurs d'upload au résultat
