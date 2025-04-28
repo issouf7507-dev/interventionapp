@@ -12,6 +12,8 @@ declare module "next-auth" {
       name?: string | null;
       email?: string | null;
       role?: string | null;
+      accessToken?: string | null;
+      refreshToken?: string | null;
     };
   }
 }
@@ -29,12 +31,13 @@ export const authOptions: NextAuthOptions = {
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
       authorization: {
-        url: "https://accounts.google.com/o/oauth2/auth",
         params: {
-          scope: "https://www.googleapis.com/auth/calendar",
+          prompt: "consent",
           access_type: "offline",
           response_type: "code",
-          prompt: "consent",
+          // scope: "openid email profile",
+          scope:
+            "openid email profile https://www.googleapis.com/auth/calendar.events",
         },
       },
     }),
@@ -85,6 +88,22 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
+    async signIn({ account, profile }) {
+      if (account?.provider === "google") {
+        // Stockez les tokens dans la base de données
+        await db.user.update({
+          where: { email: profile?.email },
+          data: {
+            googleAccessToken: account.access_token,
+            googleRefreshToken: account.refresh_token,
+            googleExpiresAt: account.expires_at
+              ? new Date(account.expires_at * 1000)
+              : null,
+          },
+        });
+      }
+      return true;
+    },
     async session({ token, session }) {
       if (token) {
         session.user = session.user ?? {};
@@ -92,11 +111,17 @@ export const authOptions: NextAuthOptions = {
         session.user.name = token.name;
         session.user.email = token.email;
         session.user.role = token.role as string | null;
+
+        //
       }
 
       return session;
     },
-    async jwt({ token, user }) {
+    async jwt({ token, user, account }) {
+      if (account) {
+        token.accessToken = account.access_token;
+        token.refreshToken = account.refresh_token;
+      }
       const dbUser = await db.user.findFirst({
         where: {
           email: token.email!,
@@ -118,6 +143,8 @@ export const authOptions: NextAuthOptions = {
         name: dbUser.name,
         email: dbUser.email,
         role: dbUser.role?.name,
+        accessToken: dbUser.googleAccessToken,
+        refreshToken: dbUser.googleRefreshToken,
       };
     },
   },

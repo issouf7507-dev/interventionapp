@@ -137,14 +137,6 @@ export function InterventionForm({
 
   const selectionType = form.watch("selectionType");
 
-  // useEffect(() => {
-  //   if (selectionType === "employees") {
-  //     form.setValue("teams", []);
-  //   } else {
-  //     form.setValue("employeeIds", []);
-  //   }
-  // }, [selectionType, form]);
-
   function handleDateSelect(date: Date | undefined) {
     if (date) {
       form.setValue("startDate", date);
@@ -218,8 +210,7 @@ export function InterventionForm({
         form.reset();
         setOpenD(false);
         setIsLoading(false);
-        // addToGoogleCalendar(submissionData);
-        // addToGoogleCalendar(submissionData);
+
         handleSubmit(submissionData);
       } else {
         setErrorUnique(res.message);

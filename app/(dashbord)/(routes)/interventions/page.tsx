@@ -73,7 +73,7 @@ function Page() {
     queryFn: () => fetchData("/api/teams"),
   });
 
-  console.log(queryallinterventions.data?.data);
+  // console.log(queryallinterventions.data?.data);
 
   return (
     <div>

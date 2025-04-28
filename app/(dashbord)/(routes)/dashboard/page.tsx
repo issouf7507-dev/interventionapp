@@ -25,6 +25,27 @@ export default async function DashboardPage() {
     redirect("/login");
   }
 
+  // console.log(session?.user?.accessToken);
+
+  // const { user } = session;
+
+  // const getGoogleEvents = async () => {
+  //   const response = await fetch(
+  //     "https://www.googleapis.com/calendar/v3/calendars/primary/events",
+  //     {
+  //       headers: {
+  //         Authorization: `Bearer ${session?.user?.accessToken}`,
+  //       },
+  //     }
+  //   );
+
+  //   return response.json();
+  // };
+
+  // const events = await getGoogleEvents();
+
+  // console.log(events);
+
   return (
     <div className="">
       <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">

@@ -7,7 +7,7 @@ import { Intervention } from "@prisma/client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { boolean, z } from "zod";
+import { boolean, string, z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -30,16 +30,16 @@ import { FileState, MultiImageDropzone } from "./_comp/MultiImageDropzone";
 
 // Type pour le résultat de uploadInterventionImages
 
-// Composant toast simple
-type ToastProps = {
-  title?: string;
-  description?: string;
-  variant?: "default" | "destructive";
-};
+// // Composant toast simple
+// type ToastProps = {
+//   title?: string;
+//   description?: string;
+//   variant?: "default" | "destructive";
+// };
 
 const updateStateSchema = z.object({
   interventionId: z.string(),
-  type: z.enum(["BEFORE", "AFTER"]),
+  type: z.string(),
   description: z.string().min(1, "La description est requise"),
   conclusion: z.string().optional(),
   states: z.array(z.string()).optional(),
@@ -59,7 +59,10 @@ export function EtatIntervention({
   setOpenUpdate: (openUpdate: boolean) => void;
   queryAllInterventions: UseQueryResult<any, Error>;
 }) {
-  const [stateType, setStateType] = useState<"BEFORE" | "AFTER">("BEFORE");
+  const [stateType, setStateType] = useState<"BEFORE" | "AFTER">(
+    intervention.status == "PENDING" ? "BEFORE" : "AFTER"
+  );
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { edgestore } = useEdgeStore();
   const [fileStates, setFileStates] = useState<FileState[]>([]);
@@ -104,7 +107,7 @@ export function EtatIntervention({
               }
             },
           });
-          // console.log(res);
+
           urls.push(res?.url);
           console.log(urls);
         } catch (err) {
@@ -117,83 +120,56 @@ export function EtatIntervention({
       const state = {
         ...data,
         state: urls,
+        type: "BEFORE",
       };
 
-      // console.log(state);
-
-      await putData(state, `/api/interventions/${intervention.id}`);
+      await putData(state, `/api/interventions/${intervention.id}`).then(
+        (res) => {
+          if (res.success) {
+            queryAllInterventions.refetch();
+            setOpenUpdate(false);
+            form.reset();
+          }
+        }
+      );
     }
 
     if (stateType === "AFTER" && urls.length > 0) {
       const state = {
         ...data,
         state: urls,
+        type: "AFTER",
       };
 
-      // console.log(state);
-
-      await putData(state, `/api/interventions/${intervention.id}`);
+      await putData(state, `/api/interventions/${intervention.id}`).then(
+        (res) => {
+          if (res.success) {
+            queryAllInterventions.refetch();
+            setOpenUpdate(false);
+            form.reset();
+          }
+        }
+      );
     }
   };
 
   return (
     <div className="space-y-6">
-      {/* <MultiImageDropzone
-        value={fileStates}
-        dropzoneOptions={{
-          maxFiles: 6,
-        }}
-        onChange={(files) => {
-          setFileStates(files);
-        }}
-        // className="w-20"
-        onFilesAdded={async (addedFiles) => {
-          setFileStates([...fileStates, ...addedFiles]);
-          
-      
-        }}
-      />
-
-      <button
-        onClick={async () => {
-          await Promise.all(
-            fileStates.map(async (addedFileState) => {
-              try {
-                const res = await edgestore.publicFiles.upload({
-                  file: addedFileState.file,
-                  onProgressChange: async (progress: any) => {
-                    updateFileProgress(addedFileState.key, progress);
-                    if (progress === 100) {
-                      // wait 1 second to set it to complete
-                      // so that the user can see the progress bar at 100%
-                      await new Promise((resolve) => setTimeout(resolve, 1000));
-                      updateFileProgress(addedFileState.key, "COMPLETE");
-                    }
-                  },
-                });
-                // console.log(res);
-                urls.push(res?.url);
-                console.log(urls);
-              } catch (err) {
-                updateFileProgress(addedFileState.key, "ERROR");
-              }
-            })
-          );
-        }}
-      >
-        Upload
-      </button> */}
-
       <RadioGroup
-        defaultValue="BEFORE"
+        defaultValue={stateType}
         className="grid grid-cols-2 gap-4"
         onValueChange={(value) => {
           setStateType(value as "BEFORE" | "AFTER");
-          form.setValue("type", value as "BEFORE" | "AFTER");
+          form.setValue("type", stateType);
         }}
       >
         <div>
-          <RadioGroupItem value="BEFORE" id="before" className="peer sr-only" />
+          <RadioGroupItem
+            value="BEFORE"
+            id="before"
+            className="peer sr-only"
+            disabled={intervention.status === "IN_PROGRESS"}
+          />
           <Label
             htmlFor="before"
             className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"

@@ -37,6 +37,9 @@ import {
 } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { Intervention } from "../(dashbord)/(routes)/interventions/table/columns";
+import CustomDrawer from "./_comp/CustomDrawer";
+import { Employes } from "../(dashbord)/(routes)/employes/table/columns";
+import { PrintableReport } from "./printable-report";
 
 const monthEventVariants = cva("size-2 rounded-full", {
   variants: {
@@ -92,6 +95,7 @@ export type CalendarEvent = {
   end: Date;
   title: string;
   color?: VariantProps<typeof monthEventVariants>["variant"];
+  alldata: any;
 };
 
 type CalendarProps = {
@@ -127,6 +131,7 @@ const Calendar = ({
           start: new Date(intervention.startDate),
           end: new Date(intervention.endDate),
           title: intervention.title,
+          alldata: intervention,
           color:
             intervention.status === "PENDING"
               ? "blue"
@@ -360,6 +365,8 @@ const CalendarMonthView = () => {
   const monthDates = useMemo(() => getDaysInMonth(date), [date]);
   const weekDays = useMemo(() => generateWeekdays(locale), [locale]);
 
+  const [openD, setOpenD] = useState(false);
+  const [eventSheet, setEventSheet] = useState<InterventionSheet | null>(null);
   if (view !== "month") return null;
 
   return (
@@ -400,7 +407,7 @@ const CalendarMonthView = () => {
                 {format(_date, "d")}
               </span>
 
-              {currentEvents.map((event) => {
+              {currentEvents.map((event: CalendarEvent) => {
                 return (
                   <div
                     key={event.id}
@@ -415,8 +422,10 @@ const CalendarMonthView = () => {
                     <span
                       onClick={() => {
                         console.log(event);
+                        setOpenD(true);
+                        setEventSheet(event.alldata);
                       }}
-                      className="flex-1 truncate font-medium text-sm hover:underline cursor-pointer"
+                      className="flex-1 truncate font-medium text-sm hover:underline cursor-pointer bg-gray-100 p-1 rounded-2xl hover:bg-gray-200 dark:bg-neutral-700"
                     >
                       {event.title}
                     </span>
@@ -430,6 +439,43 @@ const CalendarMonthView = () => {
           );
         })}
       </div>
+
+      <CustomDrawer openD={openD} setOpenD={setOpenD}>
+        {/* <div className="p-4">
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-2">
+              <h2 className="text-lg font-medium">{eventSheet?.title}</h2>
+              <p className="text-sm text-muted-foreground">
+                {eventSheet?.description}
+              </p>
+            </div>
+            <div className="flex flex-col gap-2">
+              <h2 className="text-lg font-medium">Equipe</h2>
+              <p className="text-sm text-muted-foreground">
+                {eventSheet?.team?.name}
+              </p>
+            </div>
+            <div className="flex flex-col gap-2">
+              <h2 className="text-lg font-medium">Employés</h2>
+              <p className="text-sm text-muted-foreground">
+                {eventSheet?.employees.map((employee: any) => (
+                  <div key={employee.id}>
+                    <p>
+                      {employee?.employee?.firstName +
+                        " " +
+                        employee?.employee?.lastName}
+                    </p>
+                  </div>
+                ))}
+              </p>
+            </div>
+          </div>
+        </div> */}
+
+        <div className="space-y-6 max-h-[80vh] overflow-y-auto p-2">
+          <PrintableReport intervention={eventSheet} />
+        </div>
+      </CustomDrawer>
     </div>
   );
 };

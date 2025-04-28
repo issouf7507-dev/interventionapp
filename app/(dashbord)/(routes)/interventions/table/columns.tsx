@@ -235,7 +235,7 @@ export const columns = (
                   // setOpenD(true);
                   setOpenUpdate(true);
 
-                  console.log(intervention);
+                  // console.log(intervention);
                 }}
               >
                 Mettre à jour
